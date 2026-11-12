@@ -1,9 +1,12 @@
-# `.claude/bp-al.json` — the profile
+# `.claude/alrig.json` — the profile
 
 One file. It is the plugin's entire configuration footprint, and deleting it is the complete
 uninstall.
 
-It is **data, not prose**, and it is hand-editable. `/bp-al:scan` writes it and will refresh
+Before 0.2.0 the plugin was called `bp-al` and the file was `.claude/bp-al.json`. `/alrig:scan`
+finds the old file and offers to move it; nothing else about it changed.
+
+It is **data, not prose**, and it is hand-editable. `/alrig:scan` writes it and will refresh
 it later, but **never overwrites a field a human has edited** — it shows what it would change
 and asks.
 
@@ -13,25 +16,32 @@ shape.
 
 ```jsonc
 {
-  "version": 1,
+  "version": 2,
   "tier": "customisation",                 // "product" | "customisation"
   "apps": [
     { "path": "app",
       "name": "Contoso Warehouse Ext",
       "idRanges": [[50100, 50149]],
       "prefix": "CWE",
-      "isTest": false }
+      "isTest": false,
+      "target": "Cloud",                   // "Cloud" | "OnPrem" — absent in app.json means Cloud
+      "runtime": "14.0",
+      "application": "26.0.0.0",
+      "dependsOn": [],                     // other apps in THIS repository it depends on
+      "project": null }                    // AL-Go project folder, or null
   ],
   "dependencies": [
     { "name": "Contoso Core", "sourcePath": "../contoso-core" }
   ],
   "analyzers": ["CodeCop", "UICop", "PerTenantExtensionCop"],
   "build": {
-    "command": null,
+    "provider": null,                      // "command" | "al-mcp" | null
+    "command": null,                       // may contain {app}, run once per app
     "cwd": null,
     "warningPolicy": "no-new"              // "no-new" | "zero" | "ignore"
   },
   "tests": { "present": false, "path": null, "runCommand": null },
+  "ci": { "system": null, "path": null },   // "al-go" | "azure-pipelines" | "github-actions" | null
   "authority": ["CONTRIBUTING.md"],
   "specs": { "mode": "inline", "dir": null },
   "appsource": {
@@ -54,7 +64,7 @@ shape.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `version` | number | Profile schema version. `1` today. |
+| `version` | number | Profile schema version. `2` today. A rescan of a `1` profile proposes each added field and asks. |
 | `tier` | `"product"` \| `"customisation"` | Which pipeline shape runs by default. See below. |
 | `apps[]` | array | One entry per `app.json` found. |
 | `apps[].path` | string | Directory holding `app.json`, relative to the repository root. |
@@ -62,19 +72,27 @@ shape.
 | `apps[].idRanges` | `[[from, to], …]` | From `app.json`. Used to check that claimed IDs are in range. |
 | `apps[].prefix` | string \| null | Mandatory prefix or affix. `null` when the project has none, or when detection was not confident. |
 | `apps[].isTest` | boolean | Test app, by a Microsoft test-library dependency, a `Subtype = Test` codeunit, or a `*Test*` name. |
+| `apps[].target` | `"Cloud"` \| `"OnPrem"` | From `app.json`; **absent there means `Cloud`**, the platform default. Rules tagged **[Cloud]** or **[OnPrem]** in the baseline bind only matching apps. |
+| `apps[].runtime` | string \| null | From `app.json`. A baseline rule tagged *runtime N and later* does not bind an app below N. |
+| `apps[].application` | string \| null | From `app.json` — the oldest Business Central version the app promises to run on. Symbol checks use it as the floor. |
+| `apps[].dependsOn` | string[] | Names of the **other apps in this repository** this app depends on. Builds run in this order, and a change rebuilds everything downstream of it. |
+| `apps[].project` | string \| null | The AL-Go project folder holding the app, or `null`. |
 | `dependencies[]` | array | Non-Microsoft dependencies whose source you have locally. |
 | `dependencies[].name` | string | As it appears in `app.json`. |
 | `dependencies[].sourcePath` | string \| null | Where that dependency's source lives. **Searched before anything is reported as missing** — the object you need may already exist one layer down. |
 | `analyzers[]` | string[] | Which code analyzers the project runs. Recorded so the warning gate knows what the compiler will emit. **No rule IDs are stored** — see below. |
-| `build.command` | string \| null | The build invocation. **Always confirmed by a human, never inferred silently.** |
+| `build.provider` | `"command"` \| `"al-mcp"` \| `null` | How stages build. `al-mcp` uses Microsoft's AL MCP server, registered under the key `al` by `/alrig:mcp`. `null` means no build, and every verdict is `UNVERIFIED`. |
+| `build.command` | string \| null | The build invocation, used when `build.provider` is `command`. **Always confirmed by a human, never inferred silently.** May contain `{app}`, substituted with each app's `path` and run once per app in `dependsOn` order. |
 | `build.cwd` | string \| null | Directory to run it from. `null` means the repository root. |
 | `build.warningPolicy` | `"no-new"` \| `"zero"` \| `"ignore"` | The warning gate. Default `no-new`. |
 | `tests.present` | boolean | Whether a test app exists. |
 | `tests.path` | string \| null | Where it is. |
 | `tests.runCommand` | string \| null | How to run the test suite. Detected from the VS Code tasks, an AL Test Runner setting or a root script, and **confirmed by a human** exactly as `build.command` is. `null` when the tests only run in CI, or at all. |
+| `ci.system` | `"al-go"` \| `"azure-pipelines"` \| `"github-actions"` \| `null` | Where builds run remotely. **Recorded, never run.** When it is set and `build.provider` is `null`, the repository builds only in CI, and `/alrig:scan` says what that costs. |
+| `ci.path` | string \| null | The file or directory that identified it. |
 | `authority[]` | string[] | Paths to the documents that decide things here, **in precedence order**, most authoritative first. Paths only — content is read on demand by the stage that needs it. |
 | `specs.mode` | `"file"` \| `"inline"` | Whether stage 1 writes a spec document or keeps the contract in the conversation. |
-| `specs.dir` | string \| null | Where spec documents go. **Only a directory that already exists** — the plugin never creates one. Design documents from `/bp-al:design` go here too. |
+| `specs.dir` | string \| null | Where spec documents go. **Only a directory that already exists** — the plugin never creates one. Design documents from `/alrig:design` go here too. |
 | `hotspots[]` | glob[] | Areas where any change is flagged for human review regardless of correctness. |
 | `forbidden[]` | `{pattern, why}[]` | Regex patterns banned **in this project**, each with its reason. The reason is reported with the finding. |
 | `appsource.target` | `"appsource"` \| `"pte"` \| null | Which cop's rules this app is held to. `null` means undetermined, not "not AppSource". |
@@ -85,10 +103,20 @@ shape.
 
 ## The fields worth thinking about
 
-### `build.command`
+### `build.provider` and `build.command`
 
-Everything downstream depends on it. With it `null`, stages 2 and 3 return `UNVERIFIED` — they
-will still write and review code, but no one has compiled it, and they say so.
+Everything downstream depends on them. With `build.provider` `null`, stages 2 and 3 return
+`UNVERIFIED` — they will still write and review code, but no one has compiled it, and they say
+so.
+
+Most Business Central repositories have no local build command: developers compile in VS Code,
+and AL-Go or Azure DevOps builds in a container. That is what `al-mcp` is for. Microsoft's AL
+MCP server compiles with the analyzers on, with no VS Code and no container, and `/alrig:mcp`
+sets it up and offers to switch the provider. A repository with a working command keeps it.
+
+On a multi-app repository, a command that builds one app takes `{app}`. Stages build the apps
+the change touches and every app downstream of them in `dependsOn` order, because a change
+that compiles in its own app can still break the app built on top of it.
 
 It is never written without a human confirming it, because build invocations go stale:
 compiler paths move between AL extension versions, and a stale one fails in a way that reads
@@ -120,7 +148,7 @@ with neither file present yet — so it is not read as "not AppSource".
 
 `previousVersionPath` points at the previously published `.app`. It is the input AppSourceCop
 needs to detect breaking changes, and without it that analysis has never run on the app at all.
-`/bp-al:appsource` reports that as `UNVERIFIED` rather than as a pass, because it is the check
+`/alrig:appsource` reports that as `UNVERIFIED` rather than as a pass, because it is the check
 whose failure costs a version number.
 
 It is confirmed by a human like `build.command`, and for a sharper version of the same reason:
@@ -159,7 +187,7 @@ has to fight.
 iterate-to-clean loop, and `advisory` never means unfixed — it means the pipeline does not stop
 for it.
 
-`/bp-al:scan` writes the defaults once and **never proposes changes to `policy` on a refresh**.
+`/alrig:scan` writes the defaults once and **never proposes changes to `policy` on a refresh**.
 A rescan that re-suggested defaults over a project's own settings would quietly loosen exactly
 the projects that had tightened.
 

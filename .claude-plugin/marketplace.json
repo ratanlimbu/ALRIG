@@ -1,15 +1,15 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "bp-for-al-dev",
-  "description": "Best practices for AL development — a spec/implement/review pipeline for Microsoft Dynamics 365 Business Central that adopts an existing repository in place.",
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "alrig",
+  "description": "alrig — a spec/implement/review pipeline for Microsoft Dynamics 365 Business Central that adopts an existing repository in place.",
   "owner": {
     "name": "Ratan Limbu"
   },
   "plugins": [
     {
-      "name": "bp-al",
+      "name": "alrig",
       "description": "Command-driven spec -> implement -> review pipeline for Business Central AL. Profiles the repository you already have, writes one config file, and never restructures anything.",
-      "source": "./plugins/bp-al",
+      "source": "./plugins/alrig",
       "category": "development",
       "homepage": "https://github.com/ratanlimbu/AL_ClaudeCode_Plugin"
     }

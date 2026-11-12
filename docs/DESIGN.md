@@ -1,6 +1,6 @@
-# BP_For_AL_DEV — Design
+# alrig — Design
 
-**Status:** approved 2026-09-20 · **Plugin:** `bp-al` · **Licence:** MIT
+**Status:** approved 2026-09-20 · **Plugin:** `alrig` · **Licence:** MIT
 
 A Claude Code plugin for Microsoft Dynamics 365 Business Central AL development.
 Command-driven, contract-driven, and — the constraint everything else is downstream
@@ -31,7 +31,7 @@ each turns on is worth keeping:
 - **Test execution** was deferred, not rejected — `tests.runCommand` was reserved for it. It is
   now detected, confirmed by a human like `build.command`, and run by stages 2 and 3. `null`
   stays a legal value, so a repository whose tests run only in CI loses nothing.
-- **A bundled MCP server** is still a non-goal, and `/bp-al:mcp` does not violate it. The plugin
+- **A bundled MCP server** is still a non-goal, and `/alrig:mcp` does not violate it. The plugin
   vendors no package, pins no version and starts no process. It offers a first-party HTTP
   endpoint, asks which symbol server the human already trusts, and writes what they approve.
   Bundling would mean choosing a package on their behalf that then runs on every session.
@@ -69,8 +69,8 @@ state it:
 | | Which documents are authoritative |
 
 **No customer name, no publisher, no ID range, no naming convention and no business rule is
-bundled.** Everything in that right-hand column is discovered by `/bp-al:scan` or typed by
-the developer, and lives only in that project's own `.claude/bp-al.json`.
+bundled.** Everything in that right-hand column is discovered by `/alrig:scan` or typed by
+the developer, and lives only in that project's own `.claude/alrig.json`.
 
 ### 3.2 Precedence
 
@@ -87,11 +87,12 @@ by the repository it is running in is a hazard in exactly the projects that need
 These ship in the README as guarantees. They are the reason the plugin is safe to hand to
 a colleague mid-project.
 
-1. Its entire configuration footprint is one file: `.claude/bp-al.json`. The only other
+1. Its entire configuration footprint is one file: `.claude/alrig.json`. The only other
    things it ever writes are the change you asked for, the spec documents described in
-   guarantee 4 on the `product` tier, and `.mcp.json` — which only `/bp-al:mcp` writes, only on
+   guarantee 4 on the `product` tier, and `.mcp.json` — which only `/alrig:mcp` writes, only on
    an explicit yes, and never by merging over an entry you already had.
-2. It never creates a directory layout, and never moves or renames anything.
+2. It never creates a directory layout in an existing app, and never moves or renames anything.
+   `/alrig:new` is the single, bounded exception — see §5.2.
 3. Its own tooling never edits `CLAUDE.md`, `README`, `app.json`, or any other file it did not
    create. **The change you asked for is the one exception, and it is bounded by the approved
    spec:** stage 2 edits only the files that spec names — which can include `app.json` (a
@@ -109,19 +110,20 @@ apps, or no documentation at all.
 
 ## 5. Commands
 
-All commands are namespaced `/bp-al:`.
+All commands are namespaced `/alrig:`.
 
 | Command | Behaviour |
 |---|---|
-| `/bp-al:design <request>` | Stage 0 — for a HIGH-complexity request, the decisions that are expensive to reverse, with options and a recommendation. Optional; `go` runs it only when triage says HIGH. |
-| `/bp-al:scan` | Profile the repository, write or refresh `.claude/bp-al.json`, report findings and gaps. Idempotent. |
-| `/bp-al:spec <request>` | Stage 1 — turn a request into a contract. |
-| `/bp-al:implement [spec]` | Stage 2 — write AL, run the declared build command, iterate to clean. |
-| `/bp-al:review [spec]` | Stage 3 — independent verification in a fresh context. |
-| `/bp-al:go <request>` | Stages 1–3 chained, with a human gate between each. |
-| `/bp-al:check [range]` | The stage 3 checks over a diff with no spec. No criteria, no scope, no gate. |
-| `/bp-al:appsource [app]` | AppSource submission readiness. Reports only; never gates, never writes. |
-| `/bp-al:mcp` | Offers optional MCP servers and writes `.mcp.json` on an explicit yes. |
+| `/alrig:design <request>` | Stage 0 — for a HIGH-complexity request, the decisions that are expensive to reverse, with options and a recommendation. Optional; `go` runs it only when triage says HIGH. |
+| `/alrig:scan` | Profile the repository, write or refresh `.claude/alrig.json`, report findings and gaps. Idempotent. |
+| `/alrig:new [dir]` | Scaffold an app where none exists. Asks every project fact; writes only approved files, only in a directory holding no app. |
+| `/alrig:spec <request>` | Stage 1 — turn a request into a contract. |
+| `/alrig:implement [spec]` | Stage 2 — write AL, run the declared build command, iterate to clean. |
+| `/alrig:review [spec]` | Stage 3 — independent verification in a fresh context. |
+| `/alrig:go <request>` | Stages 1–3 chained, with a human gate between each. |
+| `/alrig:check [range]` | The stage 3 checks over a diff with no spec. No criteria, no scope, no gate. |
+| `/alrig:appsource [app]` | AppSource submission readiness. Reports only; never gates, never writes. |
+| `/alrig:mcp` | Offers optional MCP servers — Microsoft's AL MCP server first — and writes their configuration on an explicit yes. |
 
 `go` only sequences the stages and triages whether Stage 0 runs. All behaviour lives in the stage skills, so the
 chained and standalone paths cannot drift apart.
@@ -132,35 +134,42 @@ scope — report `no spec` rather than passing. A criterion derived from the cod
 is a tautology with a tick beside it, and `check` exists precisely for the changes that never
 had a contract, which on a repository halfway through its life is most of them.
 
-### 5.1 `/bp-al:scan` detection order
+### 5.2 `/alrig:new` — the one command that creates a layout
 
-Each step falls through to the next:
+The first draft had no answer for an empty repository: `scan` found no `app.json`, and guarantee
+2 forbade creating one. "Adopt in place" had quietly become "adopt only what already exists".
+`new` closes that gap without loosening the contract for every other command:
 
-- **Apps** — glob `**/app.json`, excluding `.alpackages`, `node_modules`, `.git`. Each match
-  is an app. Read `name`, `publisher`, `id`, `idRanges`, `dependencies`, `internalsVisibleTo`.
-- **Test apps** — a dependency on a Microsoft test library, or a `Subtype = Test` codeunit, or
-  an app name matching `*Test*`. (`app.json`'s `target` takes only `Cloud` and `OnPrem`.)
-- **Prefix / affix** — `AppSourceCop.json` `mandatoryPrefix` / `mandatoryAffixes`; otherwise
-  the most common object-name prefix across `.al` files.
-- **Analyzers** — the `al.codeAnalyzers` entries in `.vscode/settings.json`, plus any
-  `AppSourceCop.json` / `PerTenantExtensionCop` settings. Recorded so the warning gate (§7.2)
-  knows what the compiler will actually emit.
-- **Build command** — an AL build task in `.vscode/tasks.json`; otherwise `build.ps1` /
-  `build.cmd` at the repository root; otherwise a resolvable `alc.exe`; otherwise `null`.
-  **Always presented to the human for confirmation before being written.** Build invocations
-  go stale — this field is never inferred silently.
-- **Authority documents** — `CLAUDE.md`, `CONVENTIONS.md`, `ARCHITECTURE.md`, `DECISIONS.md`,
-  `CONTRIBUTING.md`, and any per-folder architecture notes. Recorded in precedence order,
-  `CLAUDE.md` first.
-- **Spec directory** — an existing `docs/specs`, `docs/adr`, or `docs/`. If none exists,
-  `specs.mode` is set to `inline`. A directory is never created.
-- **Tier** — `product` if any of: more than one app; a test app is present; a dependency on a
-  non-Microsoft app; more than 100 `.al` files. Otherwise `customisation`.
+- it refuses any directory that already holds an app, so it can never restructure one;
+- every project fact — distribution, identity, ID range, affix, version floor — is **asked**,
+  because each is commercial or permanent, and a scaffold full of invented defaults is a guess
+  that compiles;
+- it lists every path and its contents and writes only on an explicit yes;
+- it never writes Microsoft test-library IDs, `launch.json`, CI workflows or `CLAUDE.md`. IDs
+  come from symbol packages, `launch.json` names an environment, and CI belongs to AL-Go;
+- in an AL-Go repository it defers to AL-Go's own *Create a new app* workflow, which also
+  registers the app in the project settings.
+
+### 5.1 `/alrig:scan` detection order
+
+The authoritative order lives in the plugin, at `skills/al-profile/references/detection.md`,
+so this document cannot drift from what runs. In outline, each step falling through to the next:
+
+- **Apps** — every `app.json`, with its `target` (absent means `Cloud`), `runtime`,
+  `application`, the **in-repo** apps it depends on (`dependsOn`), and its AL-Go project. No
+  apps at all means an empty repository: write nothing, recommend `/alrig:new`.
+- **Test apps**, **prefix / affix**, **analyzers** — including the cops AL-Go settings switch on.
+- **CI** — AL-Go, Azure Pipelines or GitHub Actions. **Recorded, never run**, and never read into
+  a build command.
+- **Build** — Microsoft's AL MCP server registered as `al`; else a VS Code task, a root build
+  script, a BcContainerHelper script, or a resolvable compiler; else `null`. A one-app command
+  takes `{app}` and runs per app in dependency order. **Always confirmed by the human.**
+- **Tests**, **AppSource**, **authority documents**, **spec directory**, **tier** — as before.
 
 `scan` never overwrites a field a human has edited. It reports which fields it would change
 and asks.
 
-## 6. The profile — `.claude/bp-al.json`
+## 6. The profile — `.claude/alrig.json`
 
 Data, not prose. Hand-editable; `docs/PROFILE.md` documents every field.
 
@@ -168,8 +177,10 @@ Data, not prose. Hand-editable; `docs/PROFILE.md` documents every field.
 a fictional extension purely to show the shape.
 
 ```jsonc
+// Abridged — schema 2 adds per-app target, runtime, application, dependsOn and project,
+// build.provider and ci. docs/PROFILE.md has the full current shape.
 {
-  "version": 1,
+  "version": 2,
   "tier": "customisation",                 // "product" | "customisation"
   "apps": [
     { "path": "app",
@@ -227,7 +238,7 @@ AppSource app publishes surface nothing in its own tree calls.
 
 This is what makes the plugin worth installing rather than just prompting well. It is
 platform-level knowledge — true on every Business Central project, independent of customer,
-publisher or domain — held as twelve reference files under `skills/al-conventions/references/`
+publisher or domain — held as fifteen reference files under `skills/al-conventions/references/`
 and loaded **only** by the stage that needs the theme in question.
 
 A short index in `SKILL.md` names the themes so an agent knows when to reach for one. The
@@ -350,11 +361,11 @@ independently checkable · explicit out-of-scope · `hotspots` hit.
 **In:** the approved spec and the profile.
 
 **Must:** honour `forbidden` and the §7 baseline; claim object IDs per the project's own
-rules; capture the pre-change warning set; run `build.command`; iterate to zero errors and to
+rules; capture the pre-change warning set; build by `build.provider`, in `dependsOn` order; iterate to zero errors and to
 the profile's `warningPolicy`.
 
 **Out:** files changed · build exit code · errors and the **warning delta** · `UNVERIFIED`
-when `build.command` is `null`.
+when `build.provider` is `null`.
 
 **Gate:** human approval.
 
@@ -418,22 +429,26 @@ and "I could not tell" call for different things from the human.
 ```
 AL_ClaudeCode_Plugin/
 ├─ .claude-plugin/marketplace.json
-├─ plugins/bp-al/
+├─ plugins/alrig/
 │  ├─ .claude-plugin/plugin.json
 │  ├─ THIRD-PARTY-NOTICES.md   ALDC's MIT notice, for the adapted design stage
-│  ├─ commands/   scan · design · spec · implement · review · go · check · appsource · mcp
+│  ├─ commands/   scan · new · design · spec · implement · review · go · check · appsource · mcp
 │  ├─ agents/     al-implementer.md · al-reviewer.md      (no model pinned)
 │  └─ skills/
-│     ├─ al-profile/     detection and profile authoring
+│     ├─ al-profile/     detection (references/detection.md) and profile authoring
+│     ├─ al-scaffold/    `/alrig:new` — a new app from asked-for facts
+│     ├─ al-mcp/         `/alrig:mcp` — Microsoft AL MCP, Learn, a chosen symbol server
 │     ├─ al-design/      Stage 0 — triage, decision areas, symbols, template
 │     ├─ al-spec/ · al-implement/ · al-review/
 │     ├─ al-appsource/   submission readiness; reports only
 │     └─ al-conventions/ SKILL.md (index) + references/
 │        ├─ performance.md · warnings.md · correctness.md · extension-model.md
 │        ├─ testing.md · events.md · api.md · integration.md · upgrade.md
-│        └─ permissions.md · pages.md · telemetry.md
+│        ├─ permissions.md · pages.md · telemetry.md
+│        └─ privacy.md · reports.md · copilot.md
 ├─ tests/
-│  ├─ fixtures/tiny-pte/ · fixtures/multi-app-product/   (each with expected-profile.json)
+│  ├─ fixtures/tiny-pte/ · multi-app-product/ · al-go-onprem/   (each with expected-profile.json)
+│  ├─ fixtures/empty-repo/   no app on purpose — scan writes nothing, new scaffolds
 │  ├─ lint.mjs          structural, scripted
 │  └─ BEHAVIOURAL.md    the fixture-driven procedure of §12, which needs a live session
 ├─ docs/DESIGN.md · docs/PROFILE.md
@@ -444,8 +459,8 @@ Installation:
 
 ```
 /plugin marketplace add ratanlimbu/AL_ClaudeCode_Plugin
-/plugin install bp-al
-/bp-al:scan
+/plugin install alrig
+/alrig:scan
 ```
 
 ## 12. Verification
@@ -466,7 +481,7 @@ vocabulary and a closed exemption list are irreducible data, and shaving prose t
 number costs more than ten lines do. Raising a budget is a deliberate act and is recorded here
 rather than done quietly.
 
-**Behavioural, fixture-driven** — run `/bp-al:scan` against each fixture and compare the
+**Behavioural, fixture-driven** — run `/alrig:scan` against each fixture and compare the
 produced profile with a golden file, using `tests/profile-diff.mjs`, which reports differing
 paths rather than a verdict. `null` and absent are distinct there, because the profile's
 degrade-loudly design rests on the difference, and arrays compare by index, because `authority`
@@ -477,7 +492,7 @@ profiles, because the inline snippet it replaced could not fail: the array form 
 `JSON.stringify`'s replacer is an allowlist applied at every level, so it emptied every nested
 object and compared a wrong build command equal to the right one. A checker that cannot fail is
 indistinguishable from one that passes, and nothing else in this suite would have noticed. Then assert that `git status` inside the fixture shows
-`.claude/bp-al.json` and **nothing else**. Guarantee 2 of the adopt-in-place contract is the
+`.claude/alrig.json` and **nothing else**. Guarantee 2 of the adopt-in-place contract is the
 one most likely to regress, so it gets its own before-and-after tree diff.
 
 Fixture `.al` files are stored CRLF, matching real AL repositories, so scripted edits that
@@ -487,9 +502,9 @@ silently rewrite line endings are caught.
 
 | Decision | Choice | Why |
 |---|---|---|
-| Command namespace | `/bp-al:` | Short to type; the surface colleagues touch most. |
+| Name and command namespace | `alrig`, `/alrig:` | Renamed from `bp-al` at 0.2.0: a word, not an acronym — said "AL-rig", where a rig is the harness work runs inside. Short to type on the surface colleagues touch most, and distinct from ALDC, BCQuality and ALOps. |
 | Licence | MIT | Matches the surrounding BC/AL tooling ecosystem. |
-| Profile location | `.claude/bp-al.json` | Already-conventional directory; one file to delete. |
+| Profile location | `.claude/alrig.json` | Already-conventional directory; one file to delete. |
 | Orchestration | `go` sequences the three stages | Both chained and standalone paths, one implementation. |
 | Model selection | inherit, never pin | Portability across colleagues; no surprise cost. |
 | Warning gate | delta, not count | Works on brownfield and greenfield without configuration. |
@@ -507,6 +522,12 @@ silently rewrite line endings are caught.
 | Design binding | the spec only | Review already checks the spec; no new policy category. |
 | Symbol verification | source, then symbol packages at the targeted version, parsed | Base Application source is rarely on disk; its symbols usually are, and only a parse names the owning object. |
 | Adapted content | full MIT notice in THIRD-PARTY-NOTICES.md | A credit line is not the notice MIT requires. |
+| Empty repository | `/alrig:new`, bounded: no-app directories only, every fact asked, explicit yes | Adopt-in-place had silently meant "adopt only what exists". A scaffold of invented defaults is a guess that compiles. |
+| Build provider | Microsoft's AL MCP server as an alternative to a command | Most BC repositories build in VS Code or only in CI; without a local compiler every verdict is `UNVERIFIED`. First-party, so offering it by name makes no third-party supply-chain choice. |
+| MCP server key | fixed: `al` | Subagents are granted MCP tools by name. A configurable key would need tool grants nobody can write in advance. |
+| Applicability | `[Cloud]`/`[OnPrem]` and *runtime N* tags on rules; `target` and `runtime` per app | Advice correct for one target or runtime is wrong for another; the compiler stays the authority on features. |
+| Multi-app builds | `dependsOn` edges and `{app}` | A change that compiles in its own app can break the app built on it. |
+| New themes | `privacy`, `reports`, `copilot` | Data classification, report datasets and model calls each fail silently in production and nowhere earlier. |
 
 ## 14. Confirmed at implementation — 2026-09-21
 
@@ -516,7 +537,7 @@ silently rewrite line endings are caught.
   report rather than a failure, so it never blocked work meanwhile. The check stays in the
   lint: it costs nothing and catches a placeholder reintroduced by a later edit.
 
-  The product name and the repository name are deliberately different. `BP_For_AL_DEV` is what
+  The product name and the repository name are deliberately different. `alrig` is what
   the plugin is called; `AL_ClaudeCode_Plugin` is where it lives. Only the install path and
   the homepage use the latter.
 - **Agent frontmatter key for reasoning effort** — verified against the installed plugin
@@ -535,7 +556,10 @@ than requiring the key's absence — the rule §10 wants is *never pinned*, not 
   - `allowed-tools` as a bare comma-separated list is the dominant form, used ninety times
     against a handful of JSON arrays.
   - `version:` in a `SKILL.md` frontmatter is used by fifteen official skills.
-  - Both manifests match the official shape exactly, including the `$schema` URL.
+  - Both manifests match the official shape exactly. The `$schema` URL was later moved from
+    `anthropic.com/claude-code/marketplace.schema.json`, which returns 404, to SchemaStore's
+    `claude-code-marketplace.json`, which Anthropic's own `claude-code` repository uses. Claude
+    Code ignores the key at load time; it exists for editor validation, which a 404 breaks.
 
 - **The subagent tool has two names.** Every `allowed-tools` list in the official marketplace
   spells it `Task`; this client's own tool listing calls it `Agent`. Nothing in this repository
@@ -550,9 +574,11 @@ than requiring the key's absence — the rule §10 wants is *never pinned*, not 
 ## 15. Deferred
 
 Estimation and pre-sales · documentation and release-note generation · translation tooling
-beyond the completeness check in `al-appsource` · a Copilot/AI-extensibility theme · running
-AppSourceCop's breaking-change analysis directly rather than reporting whether it can run.
+beyond the completeness check in `al-appsource` · an opt-in write-guard hook (rejected for now:
+a hook runs on every tool call, which breaks "nothing when idle") · running AppSourceCop's breaking-change analysis directly rather than reporting whether it can run.
 
-Delivered since the first draft, and no longer deferred: test execution, `/bp-al:check`, MCP as
-an opt-in rather than a bundled dependency, and the `permissions`, `pages` and `telemetry`
-themes.
+Delivered since the first draft, and no longer deferred: test execution, `/alrig:check`, MCP as
+an opt-in rather than a bundled dependency, the `permissions`, `pages` and `telemetry` themes,
+and — in profile schema 2 — `/alrig:new`, Microsoft's AL MCP server as a build provider,
+per-app `target`, `runtime` and in-repo dependency order, CI detection, the `privacy`,
+`reports` and `copilot` themes, and **[Cloud]**/*runtime N* applicability tags.

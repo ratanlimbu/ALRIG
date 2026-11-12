@@ -1,6 +1,8 @@
-# BP_For_AL_DEV
+# alrig
 
-A Claude Code plugin for Microsoft Dynamics 365 Business Central AL development.
+A Claude Code plugin for Microsoft Dynamics 365 Business Central AL development. Say it "AL-rig":
+a rig is the harness the work runs inside — a contract before the code, your own compiler during
+it, and an independent check after.
 
 `spec → implement → review` — with an optional design stage in front for the changes that need
 one — command-driven, with a human gate between each stage — and the
@@ -9,8 +11,8 @@ already halfway through its life.**
 
 ```
 /plugin marketplace add ratanlimbu/AL_ClaudeCode_Plugin
-/plugin install bp-al
-/bp-al:scan
+/plugin install alrig
+/alrig:scan
 ```
 
 ## The adopt-in-place contract
@@ -18,11 +20,14 @@ already halfway through its life.**
 These are guarantees, not intentions. They are the reason this is safe to hand to a colleague
 mid-project.
 
-1. Its entire configuration footprint is one file: **`.claude/bp-al.json`**. The only other
+1. Its entire configuration footprint is one file: **`.claude/alrig.json`**. The only other
    things it ever writes are the change you asked for, the spec documents described in
-   guarantee 4 on the `product` tier, and `.mcp.json` — which only `/bp-al:mcp` writes, only
+   guarantee 4 on the `product` tier, and `.mcp.json` — which only `/alrig:mcp` writes, only
    on an explicit yes, and never by merging over an entry you already had.
-2. It **never creates a directory layout**, and never moves or renames anything.
+2. It **never creates a directory layout in an existing app**, and never moves or renames
+   anything. The one command that creates files from nothing, `/alrig:new`, works only in a
+   directory that holds no app yet, edits no existing file, and writes only after you have seen
+   every path and said yes.
 3. Its tooling **never edits** `CLAUDE.md`, `README`, `app.json`, or any other file it did not
    create. The change you asked for is the one exception, and the approved spec bounds it: stage
    2 edits only the files that spec names — which may include `app.json` or the document where
@@ -36,23 +41,37 @@ mid-project.
 It works on a repository with uncommitted changes, a non-standard layout, several apps, or no
 documentation at all.
 
+## Every kind of Business Central project
+
+| Project | What it does differently |
+|---|---|
+| **Empty repository** | `/alrig:scan` writes nothing and points at `/alrig:new`, which scaffolds an app from your answers — never from defaults it invented. |
+| **Per-tenant extension** | `customisation` tier: no subagents, inline contract, PTE cop. |
+| **AppSource app** | AppSourceCop-aware review, breaking-change readiness, `/alrig:appsource`. Public surface counts as reachable. |
+| **OnPrem** | Each app's `target` is profiled; baseline rules tagged **[Cloud]** do not bind it, and `/alrig:appsource` says it does not apply. |
+| **Several apps, one repository** | In-repo dependency edges are profiled; builds run upstream first and rebuild everything downstream of a change. |
+| **AL-Go or Azure DevOps** | CI is recorded, never run. Where builds happen only in CI, Microsoft's AL MCP server gives the stages a local compiler — or they say `UNVERIFIED`. |
+| **Older runtimes** | Rules tagged *runtime N and later* do not bind an app below N. Nothing ever raises your runtime for you. |
+| **AI features** | A `copilot` theme, and a HIGH triage signal for any call to a model. |
+
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `/bp-al:design <request>` | Stage 0 — design a HIGH-complexity change before any spec. `go` runs it only when triage says HIGH. |
-| `/bp-al:scan` | Profile the repository, write or refresh `.claude/bp-al.json`, report findings and gaps. Idempotent. |
-| `/bp-al:spec <request>` | Stage 1 — turn a request into a contract with checkable acceptance criteria. |
-| `/bp-al:implement [spec]` | Stage 2 — write the AL, run **your** build command, iterate to clean. |
-| `/bp-al:review [spec]` | Stage 3 — independent verification in a fresh context. |
-| `/bp-al:go <request>` | All three, chained, with a human gate between each. |
-| `/bp-al:check [range]` | The stage 3 checks over a diff with no spec behind it. No gate. |
-| `/bp-al:appsource [app]` | An AppSource submission readiness report. Never gates, never writes. |
-| `/bp-al:mcp` | Offer optional MCP servers, and write `.mcp.json` only if you say yes. |
+| `/alrig:design <request>` | Stage 0 — design a HIGH-complexity change before any spec. `go` runs it only when triage says HIGH. |
+| `/alrig:scan` | Profile the repository, write or refresh `.claude/alrig.json`, report findings and gaps. Idempotent. |
+| `/alrig:new [dir]` | Start an app in an empty repository or a new directory. Asks every project fact, shows every file, writes only on yes. |
+| `/alrig:spec <request>` | Stage 1 — turn a request into a contract with checkable acceptance criteria. |
+| `/alrig:implement [spec]` | Stage 2 — write the AL, run **your** build command, iterate to clean. |
+| `/alrig:review [spec]` | Stage 3 — independent verification in a fresh context. |
+| `/alrig:go <request>` | All three, chained, with a human gate between each. |
+| `/alrig:check [range]` | The stage 3 checks over a diff with no spec behind it. No gate. |
+| `/alrig:appsource [app]` | An AppSource submission readiness report. Never gates, never writes. |
+| `/alrig:mcp` | Offer optional MCP servers — Microsoft's AL MCP server first — and write their configuration only if you say yes. |
 
 `--quick` and `--deep` override the tier for a single run.
 
-`/bp-al:check` is the one to reach for on a repository where most changes did not come through
+`/alrig:check` is the one to reach for on a repository where most changes did not come through
 a spec. It runs everything stage 3 runs except the two checks that need a contract — acceptance
 criteria and scope — and says so rather than reporting them as passed.
 
@@ -84,8 +103,8 @@ content. That is three properties for the price of one:
 | | Which documents are authoritative |
 
 **No customer name, no publisher, no ID range, no naming convention and no business rule is
-bundled.** Everything in the right-hand column is discovered by `/bp-al:scan` or typed by you,
-and lives only in your own `.claude/bp-al.json`. `tests/lint.mjs` enforces this by grepping
+bundled.** Everything in the right-hand column is discovered by `/alrig:scan` or typed by you,
+and lives only in your own `.claude/alrig.json`. `tests/lint.mjs` enforces this by grepping
 the whole repository, so it cannot erode over time.
 
 ### Your project wins
@@ -101,13 +120,13 @@ exactly the projects that need it most.
 ## What it costs
 
 **Nothing when idle.** No always-on rules, no per-turn hooks, no injected context. The profile
-is read once per run by the stage that needs it; the quality baseline is twelve reference files
+is read once per run by the stage that needs it; the quality baseline is fifteen reference files
 behind an index, and a stage loads only the theme its change touches.
 
 Subagent definitions **pin no model**, so a colleague on a smaller model stays on it and
 nobody inherits a pinned model's cost. The `customisation` tier spawns no subagents at all.
 
-The one exception is the one you opt into. An MCP server configured by `/bp-al:mcp` *is*
+The one exception is the one you opt into. An MCP server configured by `/alrig:mcp` *is*
 always-on — that is the trade, and it is why the command states the cost before the benefit and
 writes nothing without an explicit yes. Everything else here still costs nothing when idle, and
 the pipeline works with no MCP at all: the stages check less and say so.
@@ -134,7 +153,7 @@ advisory, because on a repository halfway through its life both are routinely *c
 adjacent fixes are normal, and an AppSource app publishes surface nothing in its own tree
 calls. Nothing is switched off by this. Every category is still looked for, still found and
 still reported in full; `policy` decides only what stops. Tightening it is one line of JSON,
-and `/bp-al:scan` never loosens it back.
+and `/alrig:scan` never loosens it back.
 
 ## Documentation
 
@@ -146,4 +165,4 @@ and `/bp-al:scan` never loosens it back.
 MIT. See [`LICENSE`](LICENSE).
 
 The design stage is adapted from ALDC's `al-architect` (MIT); see
-[`THIRD-PARTY-NOTICES.md`](plugins/bp-al/THIRD-PARTY-NOTICES.md).
+[`THIRD-PARTY-NOTICES.md`](plugins/alrig/THIRD-PARTY-NOTICES.md).

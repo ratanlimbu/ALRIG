@@ -1,0 +1,108 @@
+{
+  "version": 2,
+  "tier": "product",
+  "apps": [
+    {
+      "path": "core/app",
+      "name": "Fabrikam Core",
+      "idRanges": [
+        [
+          50100,
+          50149
+        ]
+      ],
+      "prefix": "FCO",
+      "isTest": false,
+      "target": "OnPrem",
+      "runtime": "14.0",
+      "application": "26.0.0.0",
+      "dependsOn": [],
+      "project": "core"
+    },
+    {
+      "path": "fieldservice/app",
+      "name": "Fabrikam Field Service",
+      "idRanges": [
+        [
+          50200,
+          50299
+        ]
+      ],
+      "prefix": "FFS",
+      "isTest": false,
+      "target": "OnPrem",
+      "runtime": "14.0",
+      "application": "26.0.0.0",
+      "dependsOn": [
+        "Fabrikam Core"
+      ],
+      "project": "fieldservice"
+    },
+    {
+      "path": "fieldservice/test",
+      "name": "Fabrikam Field Service Test",
+      "idRanges": [
+        [
+          50300,
+          50349
+        ]
+      ],
+      "prefix": "FFS",
+      "isTest": true,
+      "target": "OnPrem",
+      "runtime": "14.0",
+      "application": "26.0.0.0",
+      "dependsOn": [
+        "Fabrikam Field Service"
+      ],
+      "project": "fieldservice"
+    }
+  ],
+  "dependencies": [],
+  "analyzers": [
+    "CodeCop",
+    "UICop"
+  ],
+  "build": {
+    "provider": null,
+    "command": null,
+    "cwd": null,
+    "warningPolicy": "no-new"
+  },
+  "tests": {
+    "present": true,
+    "path": "fieldservice/test",
+    "runCommand": null
+  },
+  "ci": {
+    "system": "al-go",
+    "path": ".github/AL-Go-Settings.json"
+  },
+  "authority": [],
+  "specs": {
+    "mode": "inline",
+    "dir": null
+  },
+  "appsource": {
+    "target": null,
+    "previousVersionPath": null
+  },
+  "hotspots": [],
+  "forbidden": [],
+  "policy": {
+    "blockOn": [
+      "error",
+      "forbidden",
+      "criterion-not-met",
+      "warning-delta"
+    ],
+    "advisory": [
+      "scope",
+      "reachability",
+      "performance",
+      "hotspot",
+      "style"
+    ],
+    "requireTests": false
+  }
+}

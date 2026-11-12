@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "tier": "customisation",
   "apps": [
     {
@@ -12,7 +12,12 @@
         ]
       ],
       "prefix": "CWE",
-      "isTest": false
+      "isTest": false,
+      "target": "Cloud",
+      "runtime": "14.0",
+      "application": "26.0.0.0",
+      "dependsOn": [],
+      "project": null
     }
   ],
   "dependencies": [],
@@ -22,6 +27,7 @@
     "PerTenantExtensionCop"
   ],
   "build": {
+    "provider": null,
     "command": null,
     "cwd": null,
     "warningPolicy": "no-new"
@@ -30,6 +36,10 @@
     "present": false,
     "path": null,
     "runCommand": null
+  },
+  "ci": {
+    "system": null,
+    "path": null
   },
   "authority": [],
   "specs": {
