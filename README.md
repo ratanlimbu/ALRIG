@@ -1,8 +1,11 @@
-# alrig
+# ALRIG
 
 A Claude Code plugin for Microsoft Dynamics 365 Business Central AL development. Say it "AL-rig":
 a rig is the harness the work runs inside — a contract before the code, your own compiler during
 it, and an independent check after.
+
+The name is ALRIG; commands and files use its lowercase plugin ID — `/alrig:scan`,
+`.claude/alrig.json` — because Claude Code plugin IDs are lowercase.
 
 `spec → implement → review` — with an optional design stage in front for the changes that need
 one — command-driven, with a human gate between each stage — and the

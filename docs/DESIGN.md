@@ -1,6 +1,6 @@
-# alrig — Design
+# ALRIG — Design
 
-**Status:** approved 2026-09-20 · **Plugin:** `alrig` · **Licence:** MIT
+**Status:** approved 2026-09-20 · **Plugin:** ALRIG (ID `alrig`) · **Licence:** MIT
 
 A Claude Code plugin for Microsoft Dynamics 365 Business Central AL development.
 Command-driven, contract-driven, and — the constraint everything else is downstream
@@ -502,7 +502,7 @@ silently rewrite line endings are caught.
 
 | Decision | Choice | Why |
 |---|---|---|
-| Name and command namespace | `alrig`, `/alrig:` | Renamed from `bp-al` at 0.2.0: a word, not an acronym — said "AL-rig", where a rig is the harness work runs inside. Short to type on the surface colleagues touch most, and distinct from ALDC, BCQuality and ALOps. |
+| Name and command namespace | ALRIG; ID `alrig`, commands `/alrig:` | Renamed from `bp-al` at 0.2.0, said "AL-rig": a rig is the harness work runs inside. **ALRIG** is the display name; the plugin ID, marketplace name, command namespace, folder and profile file stay lowercase, because Claude Code requires plugin names in kebab-case and the command prefix is the ID. Short to type on the surface colleagues touch most, and distinct from ALDC, BCQuality and ALOps. |
 | Licence | MIT | Matches the surrounding BC/AL tooling ecosystem. |
 | Profile location | `.claude/alrig.json` | Already-conventional directory; one file to delete. |
 | Orchestration | `go` sequences the three stages | Both chained and standalone paths, one implementation. |
@@ -538,7 +538,7 @@ silently rewrite line endings are caught.
   lint: it costs nothing and catches a placeholder reintroduced by a later edit.
 
   The product name and the repository name were deliberately different until 0.2.0, when the
-  plugin became `alrig` and the repository was renamed to match. One name now serves the
+  plugin became ALRIG (ID `alrig`) and the repository was renamed to match. One name now serves the
   plugin, the marketplace, the command namespace and the install path. GitHub redirects the
   old repository name, so installs made from it keep working.
 - **Agent frontmatter key for reasoning effort** — verified against the installed plugin
