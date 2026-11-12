@@ -323,6 +323,12 @@ beside the diff that satisfies it.
 
 `--quick` and `--deep` override the tier default for a single run.
 
+`--quick` on `go` is also the small-change path: one approval, of the contract, before any code
+is written; implementation and review then run without the stop between them, and the human sees
+the diff, build, delta and verdict together. The removed stop guarded nothing irreversible —
+review only reads — so the contract gate, which decides what gets written, is the one kept. The
+stop returns when the contract hits a `hotspots` glob or stage 2 is `BLOCKED`.
+
 ## 9. Stage contracts
 
 ### Stage 0 — design (optional)
@@ -528,6 +534,7 @@ silently rewrite line endings are caught.
 | Applicability | `[Cloud]`/`[OnPrem]` and *runtime N* tags on rules; `target` and `runtime` per app | Advice correct for one target or runtime is wrong for another; the compiler stays the authority on features. |
 | Multi-app builds | `dependsOn` edges and `{app}` | A change that compiles in its own app can break the app built on it. |
 | New themes | `privacy`, `reports`, `copilot` | Data classification, report datasets and model calls each fail silently in production and nowhere earlier. |
+| Small changes | `go --quick`: the contract gate only, unless a hotspot or `BLOCKED` | Four stops for a one-line fix teaches people to skip the pipeline. The stop removed sits before a read-only stage. |
 
 ## 14. Confirmed at implementation — 2026-09-21
 

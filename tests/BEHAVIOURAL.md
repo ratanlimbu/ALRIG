@@ -238,3 +238,16 @@ tightened by hand. Rescan: it offers to **move** the file to `.claude/alrig.json
 only the new file exists), then
 each schema 2 field is proposed as `<absent> -> value` and asked about; `version` becomes `2`
 only once all are answered; `policy` is untouched and not proposed.
+
+## Test 14 — `--quick` is one approval, except where it must not be
+
+On `tiny-pte`, after `/alrig:scan`:
+
+1. `/alrig:go --quick add a description field to the bin helper` → no triage line, one stop
+   at the contract. Approve it. The run continues through implementation **and** review
+   without stopping, and ends with one report holding the diff, build, warning delta and
+   verdict. No subagent is started.
+2. Add `"**/src/**"` to `hotspots` and repeat → the contract shows `HOTSPOTS HIT`, and the run
+   **stops after implementation** as without `--quick`.
+3. Add a `forbidden` pattern the change cannot avoid, so stage 2 returns `BLOCKED` → the run
+   stops there and does not review.

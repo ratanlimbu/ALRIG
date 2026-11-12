@@ -18,6 +18,25 @@ already halfway through its life.**
 /alrig:scan
 ```
 
+## Start here
+
+Three commands cover most days:
+
+| You want to | Run |
+|---|---|
+| Set it up in a repository — once | `/alrig:scan`, or `/alrig:new` in an empty one |
+| Make a change | `/alrig:go <what you want>` — add `--quick` for a small one |
+| Check a change you made by hand | `/alrig:check` |
+
+Once, if your repository has no local build command — most Business Central repositories
+don't — run `/alrig:mcp` to give the stages Microsoft's AL compiler. Without one, every verdict
+says `UNVERIFIED`, because nothing compiled the code.
+
+**`--quick`** is one approval: you approve the contract, then it writes the code, builds,
+reviews, and shows you the diff and the verdict together. It skips triage and the design stage
+and runs without subagents. It still stops before review if the change touches a `hotspots`
+area or the implementation came back `BLOCKED`.
+
 ## The adopt-in-place contract
 
 These are guarantees, not intentions. They are the reason this is safe to hand to a colleague
@@ -72,7 +91,8 @@ documentation at all.
 | `/alrig:appsource [app]` | An AppSource submission readiness report. Never gates, never writes. |
 | `/alrig:mcp` | Offer optional MCP servers — Microsoft's AL MCP server first — and write their configuration only if you say yes. |
 
-`--quick` and `--deep` override the tier for a single run.
+`--quick` and `--deep` override the tier for a single run; `--quick` also folds the
+implementation gate into the final report, as described under **Start here**.
 
 `/alrig:check` is the one to reach for on a repository where most changes did not come through
 a spec. It runs everything stage 3 runs except the two checks that need a contract — acceptance
