@@ -1,8 +1,11 @@
-# alrig
+# ALRIG
 
 A Claude Code plugin for Microsoft Dynamics 365 Business Central AL development. Say it "AL-rig":
 a rig is the harness the work runs inside — a contract before the code, your own compiler during
 it, and an independent check after.
+
+The name is ALRIG; commands and files use its lowercase plugin ID — `/alrig:scan`,
+`.claude/alrig.json` — because Claude Code plugin IDs are lowercase.
 
 `spec → implement → review` — with an optional design stage in front for the changes that need
 one — command-driven, with a human gate between each stage — and the
@@ -10,10 +13,29 @@ constraint everything else is downstream of: **it is safe to add to a repository
 already halfway through its life.**
 
 ```
-/plugin marketplace add ratanlimbu/AL_ClaudeCode_Plugin
+/plugin marketplace add ratanlimbu/alrig
 /plugin install alrig
 /alrig:scan
 ```
+
+## Start here
+
+Three commands cover most days:
+
+| You want to | Run |
+|---|---|
+| Set it up in a repository — once | `/alrig:scan`, or `/alrig:new` in an empty one |
+| Make a change | `/alrig:go <what you want>` — add `--quick` for a small one |
+| Check a change you made by hand | `/alrig:check` |
+
+Once, if your repository has no local build command — most Business Central repositories
+don't — run `/alrig:mcp` to give the stages Microsoft's AL compiler. Without one, every verdict
+says `UNVERIFIED`, because nothing compiled the code.
+
+**`--quick`** is one approval: you approve the contract, then it writes the code, builds,
+reviews, and shows you the diff and the verdict together. It skips triage and the design stage
+and runs without subagents. It still stops before review if the change touches a `hotspots`
+area or the implementation came back `BLOCKED`.
 
 ## The adopt-in-place contract
 
@@ -69,7 +91,8 @@ documentation at all.
 | `/alrig:appsource [app]` | An AppSource submission readiness report. Never gates, never writes. |
 | `/alrig:mcp` | Offer optional MCP servers — Microsoft's AL MCP server first — and write their configuration only if you say yes. |
 
-`--quick` and `--deep` override the tier for a single run.
+`--quick` and `--deep` override the tier for a single run; `--quick` also folds the
+implementation gate into the final report, as described under **Start here**.
 
 `/alrig:check` is the one to reach for on a repository where most changes did not come through
 a spec. It runs everything stage 3 runs except the two checks that need a contract — acceptance

@@ -102,3 +102,5 @@ VERDICT      DONE | BLOCKED | UNVERIFIED
 ## Gate
 
 Stop. The human approves the diff, the build result and the warning delta before stage 3.
+The one exception is `/alrig:go --quick`, which folds this gate into its final report under
+the conditions it states — never on a hotspot, never after `BLOCKED`.

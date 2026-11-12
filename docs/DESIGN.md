@@ -1,6 +1,6 @@
-# alrig — Design
+# ALRIG — Design
 
-**Status:** approved 2026-09-20 · **Plugin:** `alrig` · **Licence:** MIT
+**Status:** approved 2026-09-20 · **Plugin:** ALRIG (ID `alrig`) · **Licence:** MIT
 
 A Claude Code plugin for Microsoft Dynamics 365 Business Central AL development.
 Command-driven, contract-driven, and — the constraint everything else is downstream
@@ -323,6 +323,12 @@ beside the diff that satisfies it.
 
 `--quick` and `--deep` override the tier default for a single run.
 
+`--quick` on `go` is also the small-change path: one approval, of the contract, before any code
+is written; implementation and review then run without the stop between them, and the human sees
+the diff, build, delta and verdict together. The removed stop guarded nothing irreversible —
+review only reads — so the contract gate, which decides what gets written, is the one kept. The
+stop returns when the contract hits a `hotspots` glob or stage 2 is `BLOCKED`.
+
 ## 9. Stage contracts
 
 ### Stage 0 — design (optional)
@@ -427,7 +433,7 @@ and "I could not tell" call for different things from the human.
 ## 11. Repository layout
 
 ```
-AL_ClaudeCode_Plugin/
+alrig/
 ├─ .claude-plugin/marketplace.json
 ├─ plugins/alrig/
 │  ├─ .claude-plugin/plugin.json
@@ -458,7 +464,7 @@ AL_ClaudeCode_Plugin/
 Installation:
 
 ```
-/plugin marketplace add ratanlimbu/AL_ClaudeCode_Plugin
+/plugin marketplace add ratanlimbu/alrig
 /plugin install alrig
 /alrig:scan
 ```
@@ -502,7 +508,7 @@ silently rewrite line endings are caught.
 
 | Decision | Choice | Why |
 |---|---|---|
-| Name and command namespace | `alrig`, `/alrig:` | Renamed from `bp-al` at 0.2.0: a word, not an acronym — said "AL-rig", where a rig is the harness work runs inside. Short to type on the surface colleagues touch most, and distinct from ALDC, BCQuality and ALOps. |
+| Name and command namespace | ALRIG; ID `alrig`, commands `/alrig:` | Renamed from `bp-al` at 0.2.0, said "AL-rig": a rig is the harness work runs inside. **ALRIG** is the display name; the plugin ID, marketplace name, command namespace, folder and profile file stay lowercase, because Claude Code requires plugin names in kebab-case and the command prefix is the ID. Short to type on the surface colleagues touch most, and distinct from ALDC, BCQuality and ALOps. |
 | Licence | MIT | Matches the surrounding BC/AL tooling ecosystem. |
 | Profile location | `.claude/alrig.json` | Already-conventional directory; one file to delete. |
 | Orchestration | `go` sequences the three stages | Both chained and standalone paths, one implementation. |
@@ -528,18 +534,20 @@ silently rewrite line endings are caught.
 | Applicability | `[Cloud]`/`[OnPrem]` and *runtime N* tags on rules; `target` and `runtime` per app | Advice correct for one target or runtime is wrong for another; the compiler stays the authority on features. |
 | Multi-app builds | `dependsOn` edges and `{app}` | A change that compiles in its own app can break the app built on it. |
 | New themes | `privacy`, `reports`, `copilot` | Data classification, report datasets and model calls each fail silently in production and nowhere earlier. |
+| Small changes | `go --quick`: the contract gate only, unless a hotspot or `BLOCKED` | Four stops for a one-line fix teaches people to skip the pipeline. The stop removed sits before a read-only stage. |
 
 ## 14. Confirmed at implementation — 2026-09-21
 
-- **GitHub owner** — resolved to `ratanlimbu/AL_ClaudeCode_Plugin`, taken from the repository's
+- **GitHub owner** — resolved to `ratanlimbu/AL_ClaudeCode_Plugin` (renamed to `ratanlimbu/alrig` at 0.2.0), taken from the repository's
   own `origin` remote rather than guessed. It was carried as a literal placeholder until the
   first push, with `tests/lint.mjs` reporting every occurrence on each run as a `TODO` — a
   report rather than a failure, so it never blocked work meanwhile. The check stays in the
   lint: it costs nothing and catches a placeholder reintroduced by a later edit.
 
-  The product name and the repository name are deliberately different. `alrig` is what
-  the plugin is called; `AL_ClaudeCode_Plugin` is where it lives. Only the install path and
-  the homepage use the latter.
+  The product name and the repository name were deliberately different until 0.2.0, when the
+  plugin became ALRIG (ID `alrig`) and the repository was renamed to match. One name now serves the
+  plugin, the marketplace, the command namespace and the install path. GitHub redirects the
+  old repository name, so installs made from it keep working.
 - **Agent frontmatter key for reasoning effort** — verified against the installed plugin
   schema: **`effort:` is real**, taking `low` · `medium` · `high` · `xhigh`, alongside `name`,
   `description`, `model`, `color` and `tools`. Both agents set `effort: medium` and omit

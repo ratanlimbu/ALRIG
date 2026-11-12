@@ -1,7 +1,7 @@
 ---
 description: Stage 0 — design a HIGH-complexity change before any spec is written
 argument-hint: "<what you want built or changed> [--deep]"
-allowed-tools: Skill, Read, Glob, Grep, Bash, Write, AskUserQuestion
+allowed-tools: Skill, Read, Glob, Grep, Bash, Write, AskUserQuestion, mcp__al__al_symbolsearch, mcp__al__al_downloadsymbols
 ---
 
 Load the `alrig:al-design` skill with the Skill tool and follow it exactly.

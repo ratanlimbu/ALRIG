@@ -85,7 +85,8 @@ means *nothing blocking was found in this diff*, and **not** that the change is 
 said what right was. Say that in the output rather than leaving the word to carry a weight it
 cannot.
 
-No-spec mode never gates. It is a report.
+No-spec mode never gates. It is a report. It runs in the main context on every tier — no reviewer subagent.
+
 
 ## The verdict follows the profile's policy, not your judgement
 

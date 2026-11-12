@@ -1,7 +1,7 @@
 ---
-description: Run spec, implement and review end to end, with a human gate between each stage
+description: Run spec, implement and review end to end, with a human gate between each stage (--quick for a small change, one approval before code)
 argument-hint: "<what you want built or changed> [--quick|--deep]"
-allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit, Agent, Task, AskUserQuestion
+allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit, Agent, Task, AskUserQuestion, mcp__al__al_compile, mcp__al__al_build, mcp__al__al_getdiagnostics, mcp__al__al_getnextobjectid, mcp__al__al_symbolsearch, mcp__al__al_downloadsymbols
 ---
 
 Sequence the stages. All behaviour lives in the stage skills; this command only orders
@@ -26,7 +26,9 @@ The request: `$ARGUMENTS`
    or carrying Stage 0's `OPEN` entries, if either exists. **Gate: stop and get human
    approval.** Do not proceed on silence or on an implied yes.
 5. **Stage 2** — load `alrig:al-implement`. **Gate: stop and get human approval** of the
-   diff, the build result and the warning delta.
+   diff, the build result and the warning delta. **With `--quick`, go straight to Stage 3**
+   and show the diff, build, delta and verdict together — unless the contract's `HOTSPOTS
+   HIT` is not `none` or Stage 2 returned `BLOCKED`; then this gate holds as normal.
 6. **Stage 3** — load `alrig:al-review`. Report the verdict.
 
 Every gate is a real stop. If a stage reports `BLOCKED` or `UNVERIFIED`, say which at the gate

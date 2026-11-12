@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Structural verification for alrig. Run: node tests/lint.mjs
+// Structural verification for ALRIG. Run: node tests/lint.mjs
 //
 // Checks §12 of docs/DESIGN.md:
 //   1  marketplace.json / plugin.json parse and carry required fields
