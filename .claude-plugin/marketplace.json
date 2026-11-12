@@ -11,7 +11,7 @@
       "description": "Command-driven spec -> implement -> review pipeline for Business Central AL. Profiles the repository you already have, writes one config file, and never restructures anything.",
       "source": "./plugins/alrig",
       "category": "development",
-      "homepage": "https://github.com/ratanlimbu/AL_ClaudeCode_Plugin"
+      "homepage": "https://github.com/ratanlimbu/alrig"
     }
   ]
 }

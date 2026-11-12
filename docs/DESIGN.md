@@ -427,7 +427,7 @@ and "I could not tell" call for different things from the human.
 ## 11. Repository layout
 
 ```
-AL_ClaudeCode_Plugin/
+alrig/
 ├─ .claude-plugin/marketplace.json
 ├─ plugins/alrig/
 │  ├─ .claude-plugin/plugin.json
@@ -458,7 +458,7 @@ AL_ClaudeCode_Plugin/
 Installation:
 
 ```
-/plugin marketplace add ratanlimbu/AL_ClaudeCode_Plugin
+/plugin marketplace add ratanlimbu/alrig
 /plugin install alrig
 /alrig:scan
 ```
@@ -531,15 +531,16 @@ silently rewrite line endings are caught.
 
 ## 14. Confirmed at implementation — 2026-09-21
 
-- **GitHub owner** — resolved to `ratanlimbu/AL_ClaudeCode_Plugin`, taken from the repository's
+- **GitHub owner** — resolved to `ratanlimbu/AL_ClaudeCode_Plugin` (renamed to `ratanlimbu/alrig` at 0.2.0), taken from the repository's
   own `origin` remote rather than guessed. It was carried as a literal placeholder until the
   first push, with `tests/lint.mjs` reporting every occurrence on each run as a `TODO` — a
   report rather than a failure, so it never blocked work meanwhile. The check stays in the
   lint: it costs nothing and catches a placeholder reintroduced by a later edit.
 
-  The product name and the repository name are deliberately different. `alrig` is what
-  the plugin is called; `AL_ClaudeCode_Plugin` is where it lives. Only the install path and
-  the homepage use the latter.
+  The product name and the repository name were deliberately different until 0.2.0, when the
+  plugin became `alrig` and the repository was renamed to match. One name now serves the
+  plugin, the marketplace, the command namespace and the install path. GitHub redirects the
+  old repository name, so installs made from it keep working.
 - **Agent frontmatter key for reasoning effort** — verified against the installed plugin
   schema: **`effort:` is real**, taking `low` · `medium` · `high` · `xhigh`, alongside `name`,
   `description`, `model`, `color` and `tools`. Both agents set `effort: medium` and omit

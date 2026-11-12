@@ -10,7 +10,7 @@ constraint everything else is downstream of: **it is safe to add to a repository
 already halfway through its life.**
 
 ```
-/plugin marketplace add ratanlimbu/AL_ClaudeCode_Plugin
+/plugin marketplace add ratanlimbu/alrig
 /plugin install alrig
 /alrig:scan
 ```
