@@ -1,0 +1,7 @@
+{
+  "appFolders": [ "app" ],
+  "testFolders": [ "test" ],
+  "appDependencyProbingPaths": [
+    { "repo": ".", "projects": "core", "release_status": "include" }
+  ]
+}

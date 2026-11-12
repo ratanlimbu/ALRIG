@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "tier": "product",
   "apps": [
     {
@@ -12,7 +12,12 @@
         ]
       ],
       "prefix": "FFS",
-      "isTest": false
+      "isTest": false,
+      "target": "Cloud",
+      "runtime": "14.0",
+      "application": "26.0.0.0",
+      "dependsOn": [],
+      "project": null
     },
     {
       "path": "test",
@@ -24,7 +29,14 @@
         ]
       ],
       "prefix": "FFS",
-      "isTest": true
+      "isTest": true,
+      "target": "Cloud",
+      "runtime": "14.0",
+      "application": "26.0.0.0",
+      "dependsOn": [
+        "Fabrikam Field Service"
+      ],
+      "project": null
     }
   ],
   "dependencies": [
@@ -39,6 +51,7 @@
     "AppSourceCop"
   ],
   "build": {
+    "provider": "command",
     "command": "pwsh -File ./build.ps1 -Project app",
     "cwd": null,
     "warningPolicy": "no-new"
@@ -47,6 +60,10 @@
     "present": true,
     "path": "test",
     "runCommand": null
+  },
+  "ci": {
+    "system": null,
+    "path": null
   },
   "authority": [
     "CLAUDE.md",

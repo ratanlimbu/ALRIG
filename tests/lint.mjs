@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Structural verification for BP_For_AL_DEV. Run: node tests/lint.mjs
+// Structural verification for alrig. Run: node tests/lint.mjs
 //
 // Checks §12 of docs/DESIGN.md:
 //   1  marketplace.json / plugin.json parse and carry required fields
@@ -11,6 +11,7 @@
 //   7  the golden-profile comparison actually detects a difference
 //   8  every reference file is reachable from its skill, and every one a skill names exists
 //   9  adapted third-party content ships with its licence notice
+//  10  every golden profile has one shape and the documented schema version
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, dirname, resolve, relative, sep } from "node:path";
@@ -18,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { diffProfiles } from "./profile-diff.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const PLUGIN = join(ROOT, "plugins", "bp-al");
+const PLUGIN = join(ROOT, "plugins", "alrig");
 
 const failures = [];
 const notes = [];
@@ -93,7 +94,7 @@ const marketplacePath = join(ROOT, ".claude-plugin", "marketplace.json");
 const pluginPath = join(PLUGIN, ".claude-plugin", "plugin.json");
 
 if (!existsSync(marketplacePath)) fail("manifests", "missing .claude-plugin/marketplace.json");
-if (!existsSync(pluginPath)) fail("manifests", "missing plugins/bp-al/.claude-plugin/plugin.json");
+if (!existsSync(pluginPath)) fail("manifests", "missing plugins/alrig/.claude-plugin/plugin.json");
 
 const marketplace = existsSync(marketplacePath) ? readJson(marketplacePath, "manifests") : null;
 const plugin = existsSync(pluginPath) ? readJson(pluginPath, "manifests") : null;
@@ -159,12 +160,12 @@ for (const file of commandFiles) {
   // failure is silent at run time.
   let wantsSkill = false;
   let wantsAgent = false;
-  for (const m of text.matchAll(/`bp-al:([a-z0-9-]+)`/g)) {
+  for (const m of text.matchAll(/`alrig:([a-z0-9-]+)`/g)) {
     const name = m[1];
     if (knownSkills.has(name)) wantsSkill = true;
     else if (knownAgents.has(name)) wantsAgent = true;
     else
-      fail("commands", `${rel(file)} references "bp-al:${name}", which is neither a skill nor an agent`);
+      fail("commands", `${rel(file)} references "alrig:${name}", which is neither a skill nor an agent`);
   }
 
   // The subagent-dispatch tool is named Task in every allowed-tools list across the official
@@ -197,7 +198,7 @@ for (const name of [...knownSkills, ...knownAgents]) {
   const ownFile = (p) =>
     p.endsWith(join("skills", name, "SKILL.md")) || p.endsWith(join("agents", `${name}.md`));
   const referenced = pluginMarkdown.some(
-    ([p, text]) => !ownFile(p) && text.includes(`bp-al:${name}`)
+    ([p, text]) => !ownFile(p) && text.includes(`alrig:${name}`)
   );
   if (!referenced)
     fail("commands", `"${name}" is referenced by nothing — no command or skill can reach it`);
@@ -415,7 +416,7 @@ const NOTICES = join(PLUGIN, "THIRD-PARTY-NOTICES.md");
 const mentionsAldc = pluginMarkdown.some(([p, text]) => p !== NOTICES && /\bALDC\b/.test(text));
 if (mentionsAldc) {
   if (!existsSync(NOTICES)) {
-    fail("notices", "plugins/ adapts ALDC content but plugins/bp-al/THIRD-PARTY-NOTICES.md is missing");
+    fail("notices", "plugins/ adapts ALDC content but plugins/alrig/THIRD-PARTY-NOTICES.md is missing");
   } else {
     const n = readFileSync(NOTICES, "utf8");
     if (!n.includes("Permission is hereby granted, free of charge"))
@@ -423,6 +424,62 @@ if (mentionsAldc) {
     if (!n.includes("Javier Armesto González"))
       fail("notices", "THIRD-PARTY-NOTICES.md lacks the upstream copyright holder");
   }
+}
+
+// ------------------------------------------------- 10. golden profiles share one shape
+//
+// Every fixture's golden profile is a profile of the same schema, so every one must carry the
+// same object keys at the same paths and the same `version`. A field added to the schema and
+// to one fixture only would otherwise pass Test 1 on that fixture and silently go missing on
+// the rest. Array contents differ by design; the keys of the objects inside them do not.
+
+{
+  const shape = (v, path, out) => {
+    if (Array.isArray(v)) { for (const x of v) shape(x, `${path}[]`, out); }
+    else if (v !== null && typeof v === "object")
+      for (const [k, x] of Object.entries(v)) { out.add(`${path}.${k}`); shape(x, `${path}.${k}`, out); }
+    return out;
+  };
+  const fixturesDir = join(ROOT, "tests", "fixtures");
+  const goldens = readdirSync(fixturesDir)
+    .map((d) => join(fixturesDir, d, "expected-profile.json"))
+    .filter((p) => existsSync(p));
+  const docVersion = (readFileSync(join(ROOT, "docs", "PROFILE.md"), "utf8")
+    .match(/Profile schema version\. `(\d+)` today/) || [])[1];
+  if (!docVersion) fail("golden-shape", "docs/PROFILE.md no longer states the schema version");
+  if (goldens.length < 2) fail("golden-shape", "fewer than two golden profiles — nothing to compare");
+
+  // A key inside an array element can only be compared between two fixtures whose array at
+  // that path is non-empty in both: `dependencies: []` in one fixture says nothing about the
+  // shape of a dependency. `apps[]` is non-empty in every fixture, so its keys always compare.
+  const arrayPrefix = (k) => k.slice(0, k.lastIndexOf("[]") + 2);
+  const populated = (keys, k) => !k.includes("[]") || keys.some((x) => x.startsWith(arrayPrefix(k) + "."));
+
+  let reference = null;
+  for (const p of goldens) {
+    const g = readJson(p, "golden-shape");
+    if (!g) continue;
+    if (String(g.version) !== docVersion)
+      fail("golden-shape", `${rel(p)} is version ${g.version}; docs/PROFILE.md says ${docVersion}`);
+    const keys = [...shape(g, "", new Set())].sort();
+    if (!reference) { reference = [p, keys]; continue; }
+    const [refPath, refKeys] = reference;
+    for (const k of refKeys)
+      if (!keys.includes(k) && populated(keys, k))
+        fail("golden-shape", `${rel(p)} lacks ${k}, which ${rel(refPath)} has`);
+    for (const k of keys)
+      if (!refKeys.includes(k) && populated(refKeys, k))
+        fail("golden-shape", `${rel(p)} has ${k}, which ${rel(refPath)} lacks`);
+  }
+}
+
+// Subagents reach MCP tools by the server key in their names. '/alrig:mcp' registers the AL
+// server as `al`, so any other key granted to an agent is a tool that can never exist.
+for (const file of agentFiles) {
+  const fm = frontmatter(readFileSync(file, "utf8"));
+  for (const t of (fm?.tools ?? "").split(",").map((s) => s.trim()))
+    if (t.startsWith("mcp__") && !t.startsWith("mcp__al__"))
+      fail("agents", `${rel(file)} grants ${t} — agents may only be granted the 'al' server's tools`);
 }
 
 // ------------------------------------------------- placeholders (reported, not failed)

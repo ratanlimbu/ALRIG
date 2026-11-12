@@ -1,0 +1,5 @@
+{
+  "type": "PTE",
+  "enableCodeCop": true,
+  "enableUICop": true
+}

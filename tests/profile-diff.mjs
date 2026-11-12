@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Compare a profile produced by /bp-al:scan against a golden file, and print the paths that
+// Compare a profile produced by /alrig:scan against a golden file, and print the paths that
 // differ. Run: node tests/profile-diff.mjs <actual.json> <expected.json>
 //
 // This replaces the snippet that used to live in tests/BEHAVIOURAL.md:
@@ -109,7 +109,7 @@ if (invokedDirectly) {
   const [actualPath, expectedPath] = process.argv.slice(2);
   if (!actualPath || !expectedPath) {
     console.error("usage: node tests/profile-diff.mjs <actual.json> <expected.json>");
-    console.error("  e.g. node tests/profile-diff.mjs .claude/bp-al.json expected-profile.json");
+    console.error("  e.g. node tests/profile-diff.mjs .claude/alrig.json expected-profile.json");
     process.exit(2);
   }
 

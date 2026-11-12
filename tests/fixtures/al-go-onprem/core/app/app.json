@@ -1,0 +1,17 @@
+{
+  "id": "c4e2a7f1-55d8-4b16-8f30-2ad9b6e04c77",
+  "name": "Fabrikam Core",
+  "publisher": "Fabrikam",
+  "version": "1.0.0.0",
+  "brief": "Fictional fixture extension. Not a real product.",
+  "platform": "26.0.0.0",
+  "application": "26.0.0.0",
+  "idRanges": [
+    {
+      "from": 50100,
+      "to": 50149
+    }
+  ],
+  "target": "OnPrem",
+  "runtime": "14.0"
+}
