@@ -1,7 +1,7 @@
 ---
 description: Run the stage 3 checks over the working diff, with no spec and no gate
 argument-hint: "[git range, or omit for the working tree]"
-allowed-tools: Skill, Read, Glob, Grep, Bash
+allowed-tools: Skill, Read, Glob, Grep, Bash, mcp__al__al_compile, mcp__al__al_getdiagnostics
 ---
 
 Load the `alrig:al-review` skill with the Skill tool and run it in **no-spec mode**, described
@@ -18,3 +18,6 @@ says so rather than reporting them as passed.
 
 It never writes and it never gates. `/alrig:review` is the one with a contract behind it; this
 one tells you what is true about a diff.
+
+It runs in this conversation on every tier, never in a subagent: with no spec there is no
+implementer reasoning to keep the review independent of, and a quick report should stay quick.

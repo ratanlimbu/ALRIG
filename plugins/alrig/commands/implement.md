@@ -1,7 +1,7 @@
 ---
 description: Stage 2 — write the AL for an approved spec, build it, and iterate to clean
 argument-hint: "[path to spec, or omit to use the spec from this conversation]"
-allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit, Agent, Task, AskUserQuestion
+allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit, Agent, Task, AskUserQuestion, mcp__al__al_compile, mcp__al__al_build, mcp__al__al_getdiagnostics, mcp__al__al_getnextobjectid
 ---
 
 Load the `alrig:al-implement` skill with the Skill tool and follow it exactly.
