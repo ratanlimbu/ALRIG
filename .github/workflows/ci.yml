@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Structural lint
+        run: node tests/lint.mjs
+      - name: Validate manifests
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate .
+          claude plugin validate ./plugins/alrig
+      - name: Plugin and skill versions agree
+        run: |
+          want=$(node -p "require('./plugins/alrig/.claude-plugin/plugin.json').version")
+          bad=$(grep -L "^version: $want$" plugins/alrig/skills/*/SKILL.md || true)
+          if [ -n "$bad" ]; then echo "skills not at $want:"; echo "$bad"; exit 1; fi
+          echo "all at $want"

@@ -13,10 +13,19 @@ constraint everything else is downstream of: **it is safe to add to a repository
 already halfway through its life.**
 
 ```
-/plugin marketplace add ratanlimbu/alrig
-/plugin install alrig
+/plugin install alrig --marketplace ratanlimbu/alrig
 /alrig:scan
 ```
+
+On Claude Code older than 2.1.275, add the marketplace first:
+
+```
+/plugin marketplace add ratanlimbu/alrig
+/plugin install alrig
+```
+
+To update later: `/plugin marketplace update alrig`. What changed in each release is in
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Start here
 

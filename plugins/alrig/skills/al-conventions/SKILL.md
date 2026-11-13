@@ -1,7 +1,7 @@
 ---
 name: al-conventions
 description: The AL quality baseline — platform-level Business Central practice for performance, warning discipline, correctness, extension-model judgement, testing, events, APIs, integration, upgrade, permissions, pages, telemetry, privacy, reports and Copilot. An index of fifteen themes, each loaded only when the work touches it.
-version: 0.2.0
+version: 0.3.0
 allowed-tools: Read
 ---
 

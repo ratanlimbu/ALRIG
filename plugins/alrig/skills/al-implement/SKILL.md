@@ -1,7 +1,7 @@
 ---
 name: al-implement
 description: Stage 2 of the alrig pipeline — write the AL for an approved spec, run the project's own build, and iterate until errors are zero and the warning delta satisfies the profile's policy. Used by /alrig:implement and /alrig:go.
-version: 0.2.0
+version: 0.3.0
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Agent, Task, AskUserQuestion, mcp__al__al_compile, mcp__al__al_build, mcp__al__al_getdiagnostics, mcp__al__al_getnextobjectid
 ---
 

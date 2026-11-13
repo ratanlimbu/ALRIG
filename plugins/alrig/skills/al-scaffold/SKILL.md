@@ -1,7 +1,7 @@
 ---
 name: al-scaffold
 description: Start a Business Central app where none exists — an empty repository, or a new app directory beside existing ones — asking for every project fact rather than inventing it, showing the full file list, and writing only on an explicit yes. Then profiles it. Used by /alrig:new.
-version: 0.2.0
+version: 0.3.0
 allowed-tools: Read, Glob, Grep, Bash, Write, AskUserQuestion, Skill
 ---
 

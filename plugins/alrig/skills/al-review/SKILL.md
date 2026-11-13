@@ -1,7 +1,7 @@
 ---
 name: al-review
 description: Stage 3 of the alrig pipeline — verify an AL change against its spec independently, re-running the build, recomputing the warning delta, and checking criteria, forbidden patterns, hotspots and reachability. Blocking versus advisory follows the profile's policy block. Used by /alrig:review and /alrig:go, and in no-spec mode by /alrig:check.
-version: 0.2.0
+version: 0.3.0
 allowed-tools: Read, Glob, Grep, Bash, Agent, Task, mcp__al__al_compile, mcp__al__al_getdiagnostics
 ---
 
