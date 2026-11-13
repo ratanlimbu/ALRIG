@@ -21,3 +21,5 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+# Fixtures carry .vscode/ on purpose: scan detects analyzers and the build task from it.
+!tests/fixtures/*/.vscode/
