@@ -1,7 +1,7 @@
 ---
 name: al-design
 description: Stage 0 of the alrig pipeline — for a HIGH-complexity Business Central request, present each expensive-to-reverse decision with options, trade-offs and a recommendation, verify every base symbol it relies on, and hand an approved design to al-spec. Used by /alrig:design and, after triage, by /alrig:go.
-version: 0.2.0
+version: 0.3.0
 allowed-tools: Read, Glob, Grep, Bash, Write, AskUserQuestion, mcp__al__al_symbolsearch, mcp__al__al_downloadsymbols
 ---
 

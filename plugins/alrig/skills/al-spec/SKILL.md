@@ -1,7 +1,7 @@
 ---
 name: al-spec
 description: Stage 1 of the alrig pipeline — turn a Business Central request into a contract with independently checkable acceptance criteria, before any AL is written. Used by /alrig:spec and /alrig:go.
-version: 0.2.0
+version: 0.3.0
 allowed-tools: Read, Glob, Grep, Bash, Write, AskUserQuestion
 ---
 

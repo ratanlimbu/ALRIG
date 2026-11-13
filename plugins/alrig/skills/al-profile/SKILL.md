@@ -1,7 +1,7 @@
 ---
 name: al-profile
 description: Detect what a Business Central repository actually is — its apps, prefixes, analyzers, build and test commands, authority documents and tier — and record it in .claude/alrig.json. Used by /alrig:scan.
-version: 0.2.0
+version: 0.3.0
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
 ---
 
