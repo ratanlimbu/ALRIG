@@ -1,0 +1,17 @@
+{
+  "description": "ALRIG write guard: blocks hardcoded credentials and non-allowlisted endpoints in .al files. Non-AL writes exit in the shell before PowerShell starts.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/al-write-guard.sh\"",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}

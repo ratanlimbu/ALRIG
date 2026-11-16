@@ -1,6 +1,6 @@
 ---
 name: al-conventions
-description: The AL quality baseline — platform-level Business Central practice for performance, warning discipline, correctness, extension-model judgement, testing, events, APIs, integration, upgrade, permissions, pages, telemetry, privacy, reports and Copilot. An index of fifteen themes, each loaded only when the work touches it.
+description: Business Central AL best-practice checklists (performance, warnings, correctness, events, APIs, upgrade, permissions, pages and more), loaded one theme at a time when writing or reviewing AL.
 version: 0.3.0
 allowed-tools: Read
 ---
@@ -12,16 +12,16 @@ publisher or domain. **The plugin ships this; your project ships everything spec
 
 ## Precedence
 
-This baseline **yields** to the project's own authority documents and to the `forbidden`
-patterns in `.claude/alrig.json`. When they contradict it, the project wins and you record
-that it overrode the baseline. A plugin that cannot be overruled by the repository it runs in
-is a hazard in exactly the projects that need it most.
+This baseline **yields** to the project's own authority documents (the profile's `authority`
+list, or those a spec's `AUTHORITY` line names) and to the `forbidden` patterns in
+`.claude/alrig.json`. When they contradict it, the project wins and you record the override.
 
 ## Applicability — read the app before the rule
 
 A rule tagged **[Cloud]** does not bind an app whose profile `target` is `OnPrem`, and
 **[OnPrem]** the reverse. A rule tagged *runtime N and later* does not bind an app whose
-`runtime` is lower. Skip such a rule, and say you skipped it and why. **Never raise an app's
+`runtime` is lower. Skip such a rule, and say you skipped it and why. When the app's `runtime`
+is `null`, say so and do not apply runtime-tagged rules; the compiler is the arbiter. **Never raise an app's
 `runtime` or change its `target` to make a rule apply** — that is the human's decision. The
 compiler decides which language features exist: when a build runs, believe it over this file.
 
@@ -45,10 +45,8 @@ compiler decides which language features exist: when a build runs, believe it ov
 | **reports** | the change adds or extends a report, a layout, or a document's report selection | `references/reports.md` |
 | **copilot** | the change calls an AI model, adds a Copilot capability, or builds a prompt from data | `references/copilot.md` |
 
-**Read one. Read two if the change genuinely spans them. Never read the set** — the index
-exists so their bodies stay out of context until a branch reaches for one. Fifteen themes is a
-menu, not a reading list; a change that appears to need most of them is a change that should
-have been more than one change.
+**Read one. Read two if the change genuinely spans them. Never read the set.** A change that
+appears to need most of them should have been more than one change.
 
 `correctness` and `extension-model` remain the two most often skipped and most often needed.
 If the change adds an object or alters persisted shape, one of them applies whatever else does.

@@ -86,7 +86,7 @@ function readJson(path, check) {
 }
 
 const allFiles = walk(ROOT);
-const textFiles = allFiles.filter((p) => /\.(md|json|jsonc|mjs|js|al|txt)$/i.test(p));
+const textFiles = allFiles.filter((p) => /\.(md|json|jsonc|mjs|js|al|txt|ps1|psm1|sh|toml)$/i.test(p));
 
 // ------------------------------------------------- 1. manifests
 
@@ -384,7 +384,9 @@ for (const skill of knownSkills) {
     if (!skillText.includes(named) && !commandText.includes(`skills/${skill}/${named}`))
       fail("references", `skills/${skill}/${named} is named by neither its SKILL.md nor any command`);
   }
-  for (const m of skillText.matchAll(/references\/([a-z0-9-]+\.md)/g)) {
+  // A path into another skill (`${CLAUDE_PLUGIN_ROOT}/skills/<other>/references/x.md`) is that
+  // skill's file, checked by the cross-skill rule below, not a missing file of this one.
+  for (const m of skillText.matchAll(/(?<!skills\/[a-z0-9-]+\/)references\/([a-z0-9-]+\.md)/g)) {
     if (!present.includes(m[1]))
       fail("references", `skills/${skill}/SKILL.md names references/${m[1]}, which does not exist`);
   }
@@ -480,6 +482,55 @@ for (const file of agentFiles) {
   for (const t of (fm?.tools ?? "").split(",").map((s) => s.trim()))
     if (t.startsWith("mcp__") && !t.startsWith("mcp__al__"))
       fail("agents", `${rel(file)} grants ${t} — agents may only be granted the 'al' server's tools`);
+}
+
+// ------------------------------------------------- 11. hooks and scripts resolve
+//
+// A hook whose script is missing fails on every write it matches, and a skill that names a
+// missing script fails the moment it is run. Both are found here instead. Every shipped script
+// must also be named by something, or it is dead weight like an unreferenced skill.
+
+{
+  const hooksPath = join(PLUGIN, "hooks", "hooks.json");
+  const named = new Set();
+  const collect = (text, where) => {
+    for (const m of text.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([A-Za-z0-9_./-]+)/g)) {
+      const target = m[1].replace(/[.,)]+$/, "");
+      named.add(target);
+      if (!existsSync(join(PLUGIN, target))) fail("scripts", `${where} names ${target}, which does not exist`);
+    }
+  };
+  if (existsSync(hooksPath)) {
+    const hooks = readJson(hooksPath, "scripts");
+    if (hooks && typeof hooks.hooks !== "object") fail("scripts", "hooks/hooks.json has no \"hooks\" object");
+    if (hooks) collect(readFileSync(hooksPath, "utf8"), "hooks/hooks.json");
+  }
+  for (const [p, text] of pluginMarkdown) collect(text, rel(p));
+
+  const scriptsDir = join(PLUGIN, "scripts");
+  // Scripts load their siblings with Join-Path $PSScriptRoot '<file>', and plugin files with
+  // Join-Path (Split-Path -Parent $PSScriptRoot) '<path>'. The hook fails open, so a missing
+  // module would silently switch the guard off — exactly what this check exists to catch.
+  if (existsSync(scriptsDir)) {
+    for (const f of readdirSync(scriptsDir)) {
+      const text = readFileSync(join(scriptsDir, f), "utf8");
+      for (const m of text.matchAll(/Join-Path\s+\$PSScriptRoot\s+'([^']+)'/g)) {
+        named.add(`scripts/${m[1]}`);
+        if (!existsSync(join(scriptsDir, m[1]))) fail("scripts", `scripts/${f} loads ${m[1]}, which does not exist`);
+      }
+      for (const m of text.matchAll(/Join-Path\s+\(Split-Path\s+-Parent\s+\$PSScriptRoot\)\s+'([^']+)'/g)) {
+        named.add(m[1]);
+        if (!existsSync(join(PLUGIN, m[1]))) fail("scripts", `scripts/${f} loads ${m[1]}, which does not exist`);
+      }
+    }
+  }
+  if (existsSync(scriptsDir)) {
+    const scriptText = readdirSync(scriptsDir).map((f) => readFileSync(join(scriptsDir, f), "utf8")).join("\n");
+    for (const f of readdirSync(scriptsDir)) {
+      const reached = named.has(`scripts/${f}`) || scriptText.includes(f.replace(/\.ps1$/, ""));
+      if (!reached) fail("scripts", `scripts/${f} is named by no hook, skill or other script`);
+    }
+  }
 }
 
 // ------------------------------------------------- placeholders (reported, not failed)

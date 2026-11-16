@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "tier": "product",
   "apps": [
     {
@@ -52,7 +52,7 @@
   ],
   "build": {
     "provider": "command",
-    "command": "pwsh -File ./build.ps1 -Project app",
+    "command": "pwsh -File ./build.ps1 -Project {app}",
     "cwd": null,
     "warningPolicy": "no-new"
   },
@@ -79,6 +79,11 @@
   },
   "hotspots": [],
   "forbidden": [],
+  "security": {
+    "urlAllowlist": [],
+    "rulesetBaseline": null,
+    "reportsDir": null
+  },
   "policy": {
     "blockOn": [
       "error",

@@ -24,3 +24,7 @@ profile there is no `appsource.previousVersionPath`, so the breaking-change sect
 
 If the profile's `appsource.target` is `pte`, say so once and run anyway — the checks are still
 informative, and an app's target changes.
+
+This is submission readiness. For the checks every release needs — version bump, identity, ID
+ranges, translations, secret handling, analyzers — point the user at `alrig:release-check`,
+invoked as `/alrig:release-check`.

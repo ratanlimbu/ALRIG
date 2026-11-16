@@ -1,7 +1,7 @@
 ---
-description: Run the stage 3 checks over the working diff, with no spec and no gate
+description: Review AL changes made by hand (uncommitted work or a git range) — no spec, no gate, never writes
 argument-hint: "[git range, or omit for the working tree]"
-allowed-tools: Skill, Read, Glob, Grep, Bash, mcp__al__al_compile, mcp__al__al_getdiagnostics
+allowed-tools: Skill, Read, Glob, Grep, Bash, mcp__al__al_compile, mcp__al__al_getdiagnostics, mcp__al__al_downloadsymbols
 ---
 
 Load the `alrig:al-review` skill with the Skill tool and run it in **no-spec mode**, described
@@ -11,7 +11,8 @@ Diff: `$ARGUMENTS` — a git range if given, otherwise the working tree.
 
 This is the command for a change that did not come through the pipeline, which on a repository
 already halfway through its life is most of them. It runs the build, the warning delta, the
-`forbidden` patterns, the performance dimension, hotspots, reachability and the tests.
+`forbidden` patterns, the performance dimension, hotspots, reachability and the tests. With no
+stage 2 baseline, the warning delta covers the lines the diff touched, and says so.
 
 It cannot check acceptance criteria or scope, because both need a spec to check against. It
 says so rather than reporting them as passed.

@@ -1,37 +1,32 @@
 ---
-description: Run spec, implement and review end to end, with a human gate between each stage (--quick for a small change, one approval before code)
-argument-hint: "<what you want built or changed> [--quick|--deep]"
+description: Make an AL change end to end — contract, code, build, independent review — with your approval between steps (--quick for a small change)
+argument-hint: "<what you want built or changed> [--quick: one approval | --deep: design files + subagents]"
 allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit, Agent, Task, AskUserQuestion, mcp__al__al_compile, mcp__al__al_build, mcp__al__al_getdiagnostics, mcp__al__al_getnextobjectid, mcp__al__al_symbolsearch, mcp__al__al_downloadsymbols
 ---
 
-Sequence the stages. All behaviour lives in the stage skills; this command only orders
-them and holds the gates, so the chained and standalone paths cannot drift apart.
+Sequence the stages. All behaviour lives in the stage skills; this command only orders them
+and holds the gates. The request: `$ARGUMENTS`
 
-The request: `$ARGUMENTS`
+1. Read `.claude/alrig.json`. **Absent** → run the `alrig:al-profile` skill and show the
+   profile; if it wrote nothing (an empty repository), stop and recommend `/alrig:new`.
+   **Does not parse** → quote the error, point to `/alrig:scan`, and stop.
+2. Tier: the profile's `tier`, unless `--quick` (force `customisation`) or `--deep` (force
+   `product`). State it and why in one line.
+3. **Stage 1 with triage** — load `alrig:al-spec`; it triages first (silently with `--quick`).
+   - **HIGH, confirmed** → **Stage 0**: load `alrig:al-design` at section 2. **Gate: design
+     approval.** Then back to the spec, bound by it. Fewer than three genuine decisions → it
+     was MEDIUM: carry them into the spec as `OPEN` entries, no design gate.
+   - **LOW / MEDIUM** → the spec, with the `TRIAGE` line at its top.
+   **Gate: spec approval.** Never proceed on silence or an implied yes.
+4. **Stage 2** — load `alrig:al-implement`. **Gate: approval** of the diff, build and warning
+   delta. **With `--quick`, go straight to Stage 3** and show diff, build, delta and verdict
+   together — unless `HOTSPOTS HIT` is not `none` or Stage 2 returned `BLOCKED`.
+5. **Stage 3** — load `alrig:al-review`. Report the verdict and its `NEXT` line.
 
-1. Read `.claude/alrig.json`. If it is absent, run the `alrig:al-profile` skill first and
-   show the profile before going on.
-2. Determine the run tier: the profile's `tier`, unless `--quick` (force `customisation`) or
-   `--deep` (force `product`) appears in the arguments. State which tier you are running and
-   why in one line.
-3. **Triage** — unless `--quick` was given, load `alrig:al-design` and run its section 1 only.
-   It states the result in one line and **waits for the human to confirm or override it**.
-   - **HIGH** → **Stage 0**: continue in the skill from section 2. **Gate: stop and get human
-     approval of the design.** Then carry it into Stage 1: its path on the `product` tier, or
-     the inline design on `customisation`.
-   - **Stage 0 finds fewer than three genuine decisions** → it was MEDIUM: no design to
-     approve; carry its decisions into Stage 1 as `OPEN` entries.
-   - **LOW / MEDIUM** → straight to Stage 1.
-4. **Stage 1** — load `alrig:al-spec` and produce the contract, bound by the approved design
-   or carrying Stage 0's `OPEN` entries, if either exists. **Gate: stop and get human
-   approval.** Do not proceed on silence or on an implied yes.
-5. **Stage 2** — load `alrig:al-implement`. **Gate: stop and get human approval** of the
-   diff, the build result and the warning delta. **With `--quick`, go straight to Stage 3**
-   and show the diff, build, delta and verdict together — unless the contract's `HOTSPOTS
-   HIT` is not `none` or Stage 2 returned `BLOCKED`; then this gate holds as normal.
-6. **Stage 3** — load `alrig:al-review`. Report the verdict.
+**Gates.** Every gate is a real stop. On a **no**: ask what to change, revise that stage, and
+present it again. On **stop**: end, and print how to resume (`/alrig:implement <spec>` or
+`/alrig:review <spec>` for a file spec; an inline spec ends with the conversation).
 
-Every gate is a real stop. If a stage reports `BLOCKED` or `UNVERIFIED`, say which at the gate
-rather than carrying it forward silently — the next stage inherits it either way, and only the
-human can decide whether it matters. Advisory findings are reported at the gate too; they do
-not stop the run, and they are never left out of the report because they did not.
+If a stage reports `BLOCKED`, `UNVERIFIED` or `BASELINE FAILED`, say which at the gate — the
+human decides whether it matters. Advisory findings are reported at the gate too; they never
+stop the run and are never left out.

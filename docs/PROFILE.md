@@ -16,7 +16,7 @@ shape.
 
 ```jsonc
 {
-  "version": 2,
+  "version": 3,
   "tier": "customisation",                 // "product" | "customisation"
   "apps": [
     { "path": "app",
@@ -52,6 +52,11 @@ shape.
   "forbidden": [
     { "pattern": "\\bCommit\\(", "why": "transaction boundaries belong to the caller" }
   ],
+  "security": {
+    "urlAllowlist": ["api.contoso.example"],    // hosts AL string literals may name
+    "rulesetBaseline": "../contoso-build/rulesets/pte.ruleset.json",
+    "reportsDir": null                     // existing dir for dated secret-scan reports
+  },
   "policy": {
     "blockOn":  ["error", "forbidden", "criterion-not-met", "warning-delta"],
     "advisory": ["scope", "reachability", "performance", "hotspot", "style"],
@@ -64,7 +69,7 @@ shape.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `version` | number | Profile schema version. `2` today. A rescan of a `1` profile proposes each added field and asks. |
+| `version` | number | Profile schema version. `3` today. A rescan of an older profile proposes each added field and asks. |
 | `tier` | `"product"` \| `"customisation"` | Which pipeline shape runs by default. See below. |
 | `apps[]` | array | One entry per `app.json` found. |
 | `apps[].path` | string | Directory holding `app.json`, relative to the repository root. |
@@ -95,6 +100,9 @@ shape.
 | `specs.dir` | string \| null | Where spec documents go. **Only a directory that already exists** — the plugin never creates one. Design documents from `/alrig:design` go here too. |
 | `hotspots[]` | glob[] | Areas where any change is flagged for human review regardless of correctness. |
 | `forbidden[]` | `{pattern, why}[]` | Regex patterns banned **in this project**, each with its reason. The reason is reported with the finding. |
+| `security.urlAllowlist[]` | string[] | Hosts an AL string literal may name. A host matches itself and its subdomains. Microsoft help and XML-namespace hosts are always allowed. Typed by the human; never proposed on a refresh. |
+| `security.rulesetBaseline` | string \| null | A shared ruleset the project's own ruleset must include and may not weaken. Relative to the repository root. Proposed when the project's ruleset includes one from outside the repository; **confirmed by the human**. |
+| `security.reportsDir` | string \| null | **An existing directory** where `/alrig:secret-scan` writes dated reports. `null` means reports are printed, never written. Never created by the plugin. |
 | `appsource.target` | `"appsource"` \| `"pte"` \| null | Which cop's rules this app is held to. `null` means undetermined, not "not AppSource". |
 | `appsource.previousVersionPath` | string \| null | The previously published `.app`, which AppSourceCop needs to detect breaking changes. `null` means that analysis has never run. |
 | `policy.blockOn[]` | category[] | Finding categories that make stage 3's verdict `BLOCKED`. |
@@ -133,6 +141,30 @@ practice platform-wide can be exactly wrong under a regulator that requires some
 and the reviewer reports the override rather than conforming silently.
 
 A small customisation leaves both `[]` and loses nothing.
+
+### `security`
+
+The configuration behind the write guard, `/alrig:al-scan`, `/alrig:secret-scan` and
+`/alrig:release-check`. The plugin ships the checks; which endpoints are legitimate and which
+shared standard the ruleset must meet are yours.
+
+`urlAllowlist` is read by the write guard on every `.al` write. An endpoint outside it is
+blocked, because a hardcoded URL is a setup value someone forgot to make configurable — and,
+pointed at the wrong place, a data leak. Keep it short: a host that varies by customer belongs
+in a setup table, not here.
+
+`rulesetBaseline` is how an organisation's shared ruleset — usually in its own repository,
+included by each app's ruleset through `includedRuleSets` — becomes enforceable rather than
+advisory. The project may raise any rule it sets, and may not lower one. Without it, the scan
+checks only what the project's ruleset says about itself.
+
+`reportsDir` follows the rule `specs.dir` does: only a directory that already exists. Git-ignore
+it — the reports are redacted, but they are still a map of where credentials were.
+
+A small customisation leaves all three empty and loses only the allowlist: the guard still
+blocks every credential shape it knows (key formats, secret-named assignments and labels,
+literal header and `IsolatedStorage` values, connection strings, credentials in URLs). It is a
+pattern check, not a proof — `/alrig:secret-scan` and review are the backstop.
 
 ### `analyzers`
 

@@ -1,10 +1,6 @@
 # Warnings: a delta gate, not a count
 
-## Why the gate is a delta
-
-Demanding zero warnings breaks instantly on a brownfield repository that already has
-hundreds. Demanding nothing destroys the discipline of one that has none. So **the gate is
-the change in warnings, not the total**.
+**The gate is the change in warnings, not the total.**
 
 | `build.warningPolicy` | Fails on | Suits |
 |---|---|---|
@@ -19,7 +15,20 @@ reconstructed from a build you ran only at the end — that gives you the total,
 number this gate deliberately ignores.
 
 Compare by identity, not by count. `47 -> 47` hides one warning fixed and a different one
-introduced. Match on file, line-adjacent code, rule ID and message.
+introduced. **Identity is (file, rule ID, message with line and column numbers removed)**,
+compared as counts per identity. A line number is not identity: inserting code above an old
+warning moves it without making it new. An identity whose count rose is `NEW`; one whose count
+fell is `RESOLVED`.
+
+**If the baseline build fails**, stop before editing anything. Its warning list is truncated,
+so every later warning would look new. Report `BASELINE FAILED` with the first five errors. If
+they are missing-symbol errors and the provider is `al-mcp`, offer `al_downloadsymbols` (below)
+and rebuild. Otherwise the delta is `UNVERIFIED — baseline broken before this change`, and the
+human decides whether to continue. Never fix pre-existing errors outside the spec's file list.
+
+**Working-tree changes that predate this run** (`git status --porcelain` at the start) are part
+of the baseline, not of the change. Say they exist at the gate, and review only the files this
+run touched.
 
 ## Running the build
 
@@ -44,12 +53,13 @@ The build exit code, or the tool's error count, is read before any warning — n
 
 ## No analyzer IDs are bundled
 
-This plugin ships **no hardcoded list of analyzer rule IDs**. Which cops run differs per
-project — AppSource versus per-tenant, plus whatever third-party analyzers a team has added —
-so a bundled list would be wrong somewhere and stale everywhere.
+Rule codes come from the compiler the project actually runs, never from this plugin.
 
-The codes come from the compiler the project actually runs. The plugin supplies only the
-discipline of comparing before with after.
+## Iteration limit
+
+At most **five** builds after the baseline. Stop sooner when two builds in a row leave the same
+error and new-warning set — another attempt will not change it. Either way the result is
+`BLOCKED`, listing what remains and what you tried.
 
 ## Check the exit code before reading the warning list
 

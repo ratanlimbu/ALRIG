@@ -1,6 +1,6 @@
 ---
 name: al-profile
-description: Detect what a Business Central repository actually is — its apps, prefixes, analyzers, build and test commands, authority documents and tier — and record it in .claude/alrig.json. Used by /alrig:scan.
+description: Detect what a Business Central repository is (apps, build and test commands, analyzers, authority documents, tier) and record it in .claude/alrig.json. Loaded by /alrig:scan.
 version: 0.3.0
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
 ---
@@ -21,7 +21,7 @@ command or a wrong prefix is worse than an absent one, because every later stage
 Follow `references/detection.md`, top to bottom. It covers apps (with each app's `target`,
 `runtime`, `application`, in-repo `dependsOn` edges and AL-Go `project`), test apps, prefix,
 analyzers, CI, the build provider and command, tests, AppSource, authority documents, the spec
-directory and the tier.
+directory, the tier and security.
 
 Three rules from it bind every step:
 
@@ -61,16 +61,20 @@ reported and still counted. Advisory means *stated, not silenced*.
 2. Show every field that differs, as `field: current -> proposed`.
 3. Ask which to apply. Apply only those. Leave the rest exactly as they are.
 
-`policy`, `hotspots` and `forbidden` are **never proposed on a refresh**. They hold human
+Never propose `build.provider: al-mcp -> null` while the `mcp__al__*` tools are available in
+this session: the server is registered somewhere detection did not look.
+
+`policy`, `hotspots`, `forbidden` and `security.urlAllowlist` are **never proposed on a refresh**. They hold human
 judgement, not detection, and a rescan that re-suggests defaults over them is a rescan that
 quietly loosens a project someone deliberately tightened. The one exception: if the category
 vocabulary has grown since the profile was written, name the missing categories and ask where
 they go — an unassigned category is otherwise invisible.
 
-**A profile written by an older schema** (`version` lower than `2`) is refreshed the same way:
+**A profile written by an older schema** (`version` lower than `3`) is refreshed the same way:
 each field the newer schema adds is shown as `field: <absent> -> proposed` and applied only if
-the human says so. `version` moves to `2` once every added field has been answered, applied or
-set to `null`. Nothing already present is re-proposed because the schema moved.
+the human says so. `version` moves to `3` once every added field has been answered, applied or
+set to `null`. Nothing already present is re-proposed because the schema moved. Schema 3 adds
+only the `security` block.
 
 **A profile under the plugin's former name**, `.claude/bp-al.json`, with no `.claude/alrig.json`
 beside it: offer to move it to the new name, then refresh it as above. Move, never copy — two
@@ -90,12 +94,13 @@ TESTS       <test app path and run command, both confirmed | present, no run com
 AUTHORITY   <paths, in precedence order | none found>
 SPECS       <mode, dir>
 APPSOURCE   <target, and whether a previous version is available to compare against>
+SECURITY    <allowlisted hosts | none>; <ruleset baseline, confirmed | null>; <reports dir | null>
 POLICY      <blockOn categories; advisory categories; requireTests>
 GAPS        <every field left null, and what it costs you>
 ```
 
 **The `GAPS` section is the point of the report, not a footnote.** A `null` build command
-means every later stage returns `UNVERIFIED`; say that in those words rather than leaving the
-human to work it out. Then state the one-line uninstall: delete `.claude/alrig.json`.
+means every later stage returns `UNVERIFIED`; say that in those words, and name the fix —
+`/alrig:mcp`, or a local build command. Then state the one-line uninstall: delete `.claude/alrig.json`.
 
 `docs/PROFILE.md` in this plugin's repository documents every field and its shape.

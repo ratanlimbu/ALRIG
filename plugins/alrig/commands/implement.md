@@ -1,5 +1,5 @@
 ---
-description: Stage 2 — write the AL for an approved spec, build it, and iterate to clean
+description: Implement an approved spec file and build it to clean — use to resume a /alrig:go run
 argument-hint: "[path to spec, or omit to use the spec from this conversation]"
 allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit, Agent, Task, AskUserQuestion, mcp__al__al_compile, mcp__al__al_build, mcp__al__al_getdiagnostics, mcp__al__al_getnextobjectid
 ---

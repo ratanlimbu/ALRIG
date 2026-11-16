@@ -61,6 +61,8 @@ firewall early — a request for "Business Central's IP address" has no answer.
   service — belong in an Azure Key Vault listed in `keyVaultUrls`. In Business Central online
   that is supported for AppSource apps only.
 - Never in telemetry, whatever its classification.
+- Never in source, not even "for now". The write guard blocks a credential literal in an `.al`
+  file; `alrig:secret-scan` finds the ones already committed, including in history.
 
 ## Authenticate with OAuth, not stored passwords
 

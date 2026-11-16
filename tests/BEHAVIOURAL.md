@@ -42,7 +42,7 @@ fail is indistinguishable from one that passes.
 | Fixture | Asserts |
 |---|---|
 | `tiny-pte` | `tier: customisation` · one app · prefix derived from object names, since there is no `AppSourceCop.json` · `build.command: null`, because nothing is detectable · `authority: []` — a repository with no documentation at all · `specs.mode: inline`, and **no `docs/` directory created** |
-| `multi-app-product` | `tier: product`, selected by the second app · the test app detected by its `Library Assert` dependency **and** by its `Subtype = Test` codeunit · prefix `FFS` from `AppSourceCop.json`, not derived · `build.command` taken from the `tasks.json` AL build task **and confirmed at the prompt** · `authority` in precedence order, `CLAUDE.md` before `CONVENTIONS.md` · `specs.dir: docs/specs`, because it already exists |
+| `multi-app-product` | `tier: product`, selected by the second app · the test app detected by its `Library Assert` dependency **and** by its `Subtype = Test` codeunit · prefix `FFS` from `AppSourceCop.json`, not derived · `build.command` taken from the `tasks.json` AL build task with its one-app argument replaced by `{app}` (`-Project {app}`), so the test app is built too, **and confirmed at the prompt** · `authority` in precedence order, `CLAUDE.md` before `CONVENTIONS.md` · `specs.dir: docs/specs`, because it already exists |
 | `al-go-onprem` | AL-Go: `ci.system: al-go` from `.github/AL-Go-Settings.json` · each app's `project` from its `.AL-Go/settings.json` · `target: OnPrem` on all three · `dependsOn` edges core → field service → test, and **`dependencies: []`**, because an in-repo app is an edge, not a dependency · analyzers from AL-Go's `enableCodeCop`/`enableUICop` · `build.provider: null` **and a `GAPS` line saying the repository builds only in CI** · `appsource.target: null` |
 
 Every fixture also asserts:
@@ -151,11 +151,13 @@ once, `git status --porcelain` shows only `.claude/`.
 
 On `tiny-pte`, via `/alrig:go`, stopping at the first gate each time:
 
-1. `add a description field to the bin helper` → **LOW**, no design stage.
+1. `add a description field to the bin helper` → **LOW**; no separate triage stop — the first
+   stop is the spec gate, with `TRIAGE LOW` at the top of the contract; no design stage.
 2. Add `"**/src/**"` to `hotspots` in `.claude/alrig.json` by hand, then repeat case 1 →
-   **MEDIUM** (hotspot), no design stage.
+   **MEDIUM** (hotspot), shown the same way, no design stage.
 3. `add the same field to sales orders and posted sales invoices` → **HIGH**, naming the
-   `TransferFields` signal; the design gate appears before any spec.
+   `TransferFields` signal; the run stops for triage confirmation, then the design gate appears
+   before any spec.
 4. Run `/alrig:design` with a request triaged HIGH on a weak signal, answer so that only one
    decision is genuine → the stage must say it was not HIGH and hand to `/alrig:spec`, with no
    padded TD entries.
@@ -236,14 +238,14 @@ b9b3f7f:tests/fixtures/tiny-pte/expected-profile.json`, the last commit on schem
 `.claude/bp-al.json` — the plugin's former name — in a `tiny-pte` copy, with `policy.blockOn`
 tightened by hand. Rescan: it offers to **move** the file to `.claude/alrig.json` (afterwards
 only the new file exists), then
-each schema 2 field is proposed as `<absent> -> value` and asked about; `version` becomes `2`
+each schema 2 and 3 field is proposed as `<absent> -> value` and asked about; `version` becomes `3`
 only once all are answered; `policy` is untouched and not proposed.
 
 ## Test 14 — `--quick` is one approval, except where it must not be
 
 On `tiny-pte`, after `/alrig:scan`:
 
-1. `/alrig:go --quick add a description field to the bin helper` → no triage line, one stop
+1. `/alrig:go --quick add a description field to the bin helper` → no triage line (LOW), one stop
    at the contract. Approve it. The run continues through implementation **and** review
    without stopping, and ends with one report holding the diff, build, warning delta and
    verdict. No subagent is started.
@@ -251,3 +253,23 @@ On `tiny-pte`, after `/alrig:scan`:
    **stops after implementation** as without `--quick`.
 3. Add a `forbidden` pattern the change cannot avoid, so stage 2 returns `BLOCKED` → the run
    stops there and does not review.
+4. `/alrig:go --quick add the same field to sales orders and posted sales invoices` → triage
+   finds **HIGH**, says `--quick` does not apply and why, and continues as a normal run.
+
+## Test 15 — failure paths are defined
+
+On `tiny-pte`, after `/alrig:scan`:
+
+1. Break `.claude/alrig.json` (delete a closing brace) → `/alrig:go`, `/alrig:check` and
+   `/alrig:review` each quote the parse error and stop; none falls back to defaults.
+2. Set a `build.command` that always exits non-zero → stage 2 reports `BASELINE FAILED` with
+   the first errors and edits no file.
+3. Set a `build.command` that always prints the same new warning → stage 2 stops within five
+   builds (sooner when two builds match) with `BLOCKED`.
+4. Answer **no** at the spec gate → the contract is revised and shown again; answer **stop** →
+   the run ends and says how to resume.
+5. With `build.provider: null` and a `forbidden` hit in the diff, `/alrig:check` → `VERDICT
+   BLOCKED`, with the missing build also listed under `BECAUSE`.
+6. On an empty repository, `/alrig:go anything` → stops and recommends `/alrig:new`.
+7. On `al-go-onprem` (`product`, `specs.dir: null`), `/alrig:go` → the contract is inline,
+   with a line saying so; no directory is created.
