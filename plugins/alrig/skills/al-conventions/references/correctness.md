@@ -75,6 +75,17 @@ single document being released — where a human is present to read it and retry
 The corollary: a batch that "succeeded" while skipping rows must report **how many** it
 skipped, somewhere a person actually looks.
 
+### Isolating one row's failure
+
+- **`if not Codeunit.Run(Codeunit::"<row processor>", Row) then`** — log `GetLastErrorText()`,
+  call `ClearLastError()`, continue. A failed run rolls back only that row's writes. It cannot
+  start inside an open write transaction, so the batch commits before each call: this is the
+  deliberate per-row `Commit` the `performance` theme allows.
+- **`[TryFunction]` is for code that reads or calls out.** Database writes inside one are not
+  rolled back when it fails. Never use it to make a write "safe".
+- **Collectible errors** (`telemetry` theme) report every failure in one pass. Use them for
+  validation; use `Codeunit.Run` for processing that writes.
+
 ## Errors that are actionable
 
 An error names what failed, which record, and what to do about it. Prefer the structured

@@ -1,7 +1,7 @@
 ---
 name: al-design
-description: Stage 0 of the alrig pipeline — for a HIGH-complexity Business Central request, present each expensive-to-reverse decision with options, trade-offs and a recommendation, verify every base symbol it relies on, and hand an approved design to al-spec. Used by /alrig:design and, after triage, by /alrig:go.
-version: 0.3.0
+description: alrig stage 0 — for a HIGH-complexity Business Central change, settle the expensive-to-reverse decisions and verify base symbols before any spec. Loaded by /alrig:design and /alrig:go.
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash, Write, AskUserQuestion, mcp__al__al_symbolsearch, mcp__al__al_downloadsymbols
 ---
 
@@ -13,8 +13,8 @@ them. **No code, no object IDs, no signatures, no test plan** — those are the 
 ## 1. Triage
 
 Apply `references/triage.md`, state the result in one line, and wait for the human to confirm
-or override it. **When `/alrig:go` loaded you for triage, this section is all it asked for:**
-report the confirmed result and stop; `go` resumes you at section 2 if it is HIGH.
+or override it. **When `/alrig:go` loads you, triage is already done and confirmed HIGH** —
+apply the `customisation` bullet below, then go to section 2.
 
 - Invoked directly on a LOW or MEDIUM request: say so, recommend `/alrig:spec`, and continue
   only if the human insists.

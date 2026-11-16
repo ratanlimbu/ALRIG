@@ -1,7 +1,7 @@
 {
   "name": "alrig",
   "description": "ALRIG — a rig for Business Central AL development: a command-driven spec -> implement -> review pipeline for Microsoft Dynamics 365 Business Central. It profiles the repository as it stands, records what it found in one file, and never imposes a structure — so it is safe to add to a project that is already halfway through its life.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "Ratan Limbu"
   },

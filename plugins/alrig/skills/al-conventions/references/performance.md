@@ -7,7 +7,7 @@ review-time one.
 The theme behind every rule below: **the expensive thing is data crossing the boundary
 between the service tier and the database**, not the AL statements around it.
 
-## Read only the fields you use
+## Read only the fields you use (runtime 6.0 and later)
 
 Declare partial records. A record variable with no field declaration drags every column,
 including BLOBs, for every row.
@@ -83,14 +83,17 @@ then read from it — a temporary table lives in memory and costs no round trip.
 
 `Commit` inside a loop, or before a call you expect might fail, splits one transaction into
 many and leaves partial state behind on error. **Transaction boundaries belong to the caller.**
-The legitimate uses are narrow and deliberate; if you are reaching for it to make something
-work, the something is wrong.
+The legitimate uses are narrow and deliberate — chiefly the per-row `Codeunit.Run` isolation
+in the `correctness` theme. If you are reaching for it to make something work, the something
+is wrong.
 
 ## Prefer set-based operations
 
 `ModifyAll` and `DeleteAll` on a filtered set beat a `repeat..until` of per-record calls — but
 only where the semantics allow it. They do not fire `OnModify`/`OnDelete` triggers by default,
-so check that nothing depends on those before converting a loop.
+so check that nothing depends on those before converting a loop. They stay set-based only while
+nothing subscribes to the table's modify/delete events; with a subscriber the platform falls
+back to row-by-row.
 
 ## Locking and read isolation
 

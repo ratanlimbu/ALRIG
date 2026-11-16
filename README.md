@@ -38,12 +38,16 @@ Three commands cover most days:
 | Check a change you made by hand | `/alrig:check` |
 
 Once, if your repository has no local build command — most Business Central repositories
-don't — run `/alrig:mcp` to give the stages Microsoft's AL compiler. Without one, every verdict
-says `UNVERIFIED`, because nothing compiled the code.
+don't — run `/alrig:mcp` to give the stages Microsoft's AL compiler. Without one, verdicts say
+`UNVERIFIED`, because nothing compiled the code. Before you run it:
+
+- run `/alrig:scan` first — `/alrig:mcp` reads your app paths from the profile;
+- have the .NET 8 runtime and the AL Language extension installed;
+- restart the Claude Code session afterwards, so the new server's tools load.
 
 **`--quick`** is one approval: you approve the contract, then it writes the code, builds,
-reviews, and shows you the diff and the verdict together. It skips triage and the design stage
-and runs without subagents. It still stops before review if the change touches a `hotspots`
+reviews, and shows you the diff and the verdict together. It skips the design stage and runs
+without subagents; if triage finds the change HIGH-risk it says so and runs normally instead. It still stops before review if the change touches a `hotspots`
 area or the implementation came back `BLOCKED`.
 
 ## The adopt-in-place contract
@@ -53,8 +57,9 @@ mid-project.
 
 1. Its entire configuration footprint is one file: **`.claude/alrig.json`**. The only other
    things it ever writes are the change you asked for, the spec documents described in
-   guarantee 4 on the `product` tier, and `.mcp.json` — which only `/alrig:mcp` writes, only
-   on an explicit yes, and never by merging over an entry you already had.
+   guarantee 4 on the `product` tier, `.mcp.json` — which only `/alrig:mcp` writes, only
+   on an explicit yes, and never by merging over an entry you already had — and dated
+   secret-scan reports, only into a `security.reportsDir` that already exists.
 2. It **never creates a directory layout in an existing app**, and never moves or renames
    anything. The one command that creates files from nothing, `/alrig:new`, works only in a
    directory that holds no app yet, edits no existing file, and writes only after you have seen
@@ -99,6 +104,26 @@ documentation at all.
 | `/alrig:check [range]` | The stage 3 checks over a diff with no spec behind it. No gate. |
 | `/alrig:appsource [app]` | An AppSource submission readiness report. Never gates, never writes. |
 | `/alrig:mcp` | Offer optional MCP servers — Microsoft's AL MCP server first — and write their configuration only if you say yes. |
+
+### Scanning and release gates
+
+| Skill | What it does |
+|---|---|
+| `/alrig:al-scan [app]` | Compile with every analyzer you run — CodeCop, AppSourceCop, UICop, PerTenantExtensionCop, and third-party ones such as LinterCop or ALCops that your settings declare — under your ruleset. Every diagnostic grouped by rule, and a check that the ruleset has not been weakened against a shared baseline. |
+| `/alrig:secret-scan` | gitleaks over the working tree **and history**, redacted. Each finding triaged — rotate, move, or confirm it is fake — with where that secret should live instead. A dated report if you have given it a directory. |
+| `/alrig:release-check [app]` | Version bumped, app `id` unchanged, objects inside their ranges, translations complete, secrets held in `SecretText`/`IsolatedStorage` and never in a table field, plus both scans. `READY`, `BLOCKED` or `UNVERIFIED`. |
+
+All three read and report; none edits your code. They need PowerShell (Windows PowerShell 5.1
+or PowerShell 7), the AL Language extension for the compiler, and gitleaks for a full secret
+scan — without it a weaker built-in scan runs and says so.
+
+**The write guard.** A hook blocks Claude from writing a credential literal, or an endpoint not
+in `security.urlAllowlist`, into an `.al` file, and tells it where the value belongs instead.
+Writes to any other file exit in the shell before PowerShell starts.
+
+**Bring your own standard.** The plugin ships no ruleset. If your organisation keeps a shared
+one — in its own repository, included by each app's ruleset — set
+`security.rulesetBaseline` to it and `/alrig:al-scan` blocks on any rule a project lowered.
 
 `--quick` and `--deep` override the tier for a single run; `--quick` also folds the
 implementation gate into the final report, as described under **Start here**.
@@ -151,8 +176,9 @@ exactly the projects that need it most.
 
 ## What it costs
 
-**Nothing when idle.** No always-on rules, no per-turn hooks, no injected context. The profile
-is read once per run by the stage that needs it; the quality baseline is fifteen reference files
+**Almost nothing when idle.** No always-on rules, no injected context — only the one-line
+command and skill descriptions Claude Code lists in every session. The one hook, the write
+guard, adds no tokens and exits in the shell for every write that is not an `.al` file. The profile is read once per run by the stage that needs it; the quality baseline is fifteen reference files
 behind an index, and a stage loads only the theme its change touches.
 
 Subagent definitions **pin no model**, so a colleague on a smaller model stays on it and
@@ -160,7 +186,7 @@ nobody inherits a pinned model's cost. The `customisation` tier spawns no subage
 
 The one exception is the one you opt into. An MCP server configured by `/alrig:mcp` *is*
 always-on — that is the trade, and it is why the command states the cost before the benefit and
-writes nothing without an explicit yes. Everything else here still costs nothing when idle, and
+writes nothing without an explicit yes. Everything else here still costs almost nothing when idle, and
 the pipeline works with no MCP at all: the stages check less and say so.
 
 ## Three things it insists on

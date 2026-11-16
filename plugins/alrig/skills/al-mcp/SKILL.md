@@ -1,7 +1,7 @@
 ---
 name: al-mcp
-description: Offer the optional MCP servers that let the alrig stages build, find symbols and cite documentation — Microsoft's AL MCP server, Microsoft Learn, and a symbol server of the human's choosing — and write their configuration only on an explicit yes. Used by /alrig:mcp.
-version: 0.3.0
+description: Offer optional MCP servers for alrig (Microsoft AL MCP server, Microsoft Learn, a symbol server) and write their configuration only on an explicit yes. Loaded by /alrig:mcp.
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
 ---
 

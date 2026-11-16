@@ -3,3 +3,6 @@
 # Without this, git normalises them on checkout and the test proves nothing.
 * text=auto
 tests/fixtures/**/*.al -text
+
+# The write guard runs under sh; a CRLF checkout breaks it.
+*.sh text eol=lf

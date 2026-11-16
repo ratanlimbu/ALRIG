@@ -40,7 +40,7 @@ the new base version.
 Prefer anchoring to a group. When you must anchor to a control, pick a long-standing one rather
 than the nearest one.
 
-## Actions, and the promoted-action rewrite
+## Actions, and the promoted-action rewrite (runtime 10.0 and later)
 
 Promotion is declared in an `area(Promoted)` with `actionref`, not with `Promoted = true` on
 the action itself:

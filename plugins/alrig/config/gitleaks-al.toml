@@ -1,0 +1,80 @@
+# gitleaks configuration shipped with ALRIG: gitleaks' own default rules, plus rules for the
+# shapes credentials take in Business Central AL source. Used only when the repository has no
+# .gitleaks.toml of its own; a project's own configuration always wins.
+#
+# These mirror the rules in scripts/AlrigSecurity.psm1, which the write guard and the built-in
+# fallback use. Change one, change the other.
+#
+# No project-specific values belong here. Allowlist a fingerprint in the repository's own
+# .gitleaksignore, which gitleaks reads from the scanned directory.
+#
+# gitleaks drops a match whose secret's Shannon entropy is below `entropy`. An 8-character
+# value can reach at most 3.0, so thresholds stay below the shortest value each rule accepts.
+
+title = "alrig: gitleaks defaults plus Business Central AL rules"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "al-secret-assignment"
+description = "AL: a secret-named identifier assigned a string literal"
+regex = '''(?i)\b\w*(?:password|passwd|passphrase|secret|apikey|api_key|accesskey|access_key|privatekey|private_key|sharedkey|subscriptionkey|encryptionkey|signingkey|hmackey|masterkey|functionkey|hostkey|clientsecret|client_secret|token)\w*\s*:=\s*\x27([^\x27\s]{8,})\x27'''
+secretGroup = 1
+entropy = 2.5
+path = '''(?i)\.al$'''
+keywords = ["password", "passwd", "passphrase", "secret", "apikey", "api_key", "accesskey", "access_key", "privatekey", "private_key", "sharedkey", "subscriptionkey", "encryptionkey", "signingkey", "hmackey", "masterkey", "functionkey", "hostkey", "token"]
+
+[[rules]]
+id = "al-secret-label"
+description = "AL: a Label holding a key or token literal"
+regex = '''(?i)\b\w*(?:password|passwd|passphrase|secret|apikey|api_key|accesskey|access_key|privatekey|private_key|sharedkey|subscriptionkey|encryptionkey|signingkey|hmackey|masterkey|functionkey|hostkey|clientsecret|client_secret|token)\w*\s*:\s*Label\s*\x27([A-Za-z0-9+/=_.~-]{16,})\x27'''
+secretGroup = 1
+entropy = 3.0
+path = '''(?i)\.al$'''
+keywords = ["label"]
+
+[[rules]]
+id = "header-secret-literal"
+description = "AL: an HTTP header that carries a key or token, given a literal value"
+regex = '''(?i)\.(?:Add|TryAddWithoutValidation)\(\s*\x27[^\x27]*(?:key|token|secret|authorization|password|signature)[^\x27]*\x27\s*,\s*\x27(?:(?:Bearer|Basic)\s+)?([^\x27\s]{8,})\x27'''
+secretGroup = 1
+entropy = 2.5
+path = '''(?i)\.al$'''
+keywords = [".add(", "tryaddwithoutvalidation"]
+
+[[rules]]
+id = "isolatedstorage-literal"
+description = "AL: IsolatedStorage given a literal value"
+regex = '''(?i)IsolatedStorage\.Set(?:Encrypted)?\(\s*\x27[^\x27]*\x27\s*,\s*\x27([^\x27]{8,})\x27'''
+secretGroup = 1
+entropy = 2.5
+path = '''(?i)\.al$'''
+keywords = ["isolatedstorage"]
+
+[[rules]]
+id = "connection-string-password"
+description = "A password inside a quoted connection string"
+regex = '''(?i)[\x27"][^\x27"]*?\b(?:password|pwd)\s*=\s*([^;\x27"\s{}%$]{4,})'''
+secretGroup = 1
+entropy = 1.5
+keywords = ["password", "pwd"]
+
+[[rules]]
+id = "url-userinfo"
+description = "Credentials embedded in a URL"
+regex = '''(?i)\bhttps?://[^@/\s\x27":]+:([^@/\s\x27"]{3,})@'''
+secretGroup = 1
+entropy = 1.5
+keywords = ["http"]
+
+[allowlist]
+description = "Generated, downloaded and repository-internal files"
+paths = [
+  '''(?i)(?:^|/)\.git/''',
+  '''(?i)(?:^|/)\.alpackages/''',
+  '''(?i)(?:^|/)\.snapshots/''',
+  '''(?i)(?:^|/)\.output/''',
+  '''(?i)\.app$''',
+  '''(?i)\.g\.xlf$''',
+]

@@ -1,5 +1,5 @@
 ---
-description: Profile this Business Central repository and write or refresh .claude/alrig.json
+description: Set up ALRIG in this repository — detect the apps, build and analyzers and write or refresh .claude/alrig.json (for an analyzer run, use /alrig:al-scan)
 argument-hint: "[--dry-run]"
 allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion
 ---

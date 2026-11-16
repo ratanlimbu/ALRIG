@@ -1,5 +1,5 @@
 ---
-description: Stage 0 — design a HIGH-complexity change before any spec is written
+description: Settle the hard-to-reverse decisions of a large AL change before any spec (/alrig:go does this automatically when needed)
 argument-hint: "<what you want built or changed> [--deep]"
 allowed-tools: Skill, Read, Glob, Grep, Bash, Write, AskUserQuestion, mcp__al__al_symbolsearch, mcp__al__al_downloadsymbols
 ---
@@ -10,7 +10,8 @@ The request: `$ARGUMENTS`
 
 If the request is empty, ask for it rather than inventing one.
 
-Read `.claude/alrig.json` first. If it is absent, run the `alrig:al-profile` skill first — a
+Read `.claude/alrig.json` first. If it does not parse, quote the error and stop. If it is
+absent, run the `alrig:al-profile` skill first — a
 design that names apps, dependencies and hotspots cannot be made without the profile.
 
 What this command may write, and nothing else:

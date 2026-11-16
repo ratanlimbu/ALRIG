@@ -76,7 +76,7 @@ deprecated and a connection string is required for new work.
 Without it nothing is emitted at all, which is a state that looks identical to a feature nobody
 uses. `al-appsource` reports its absence for that reason.
 
-## Errors a person can act on
+## Errors a person can act on (`DetailedMessage` and actions: runtime 8.0 and later)
 
 ```al
 var
@@ -92,7 +92,7 @@ begin
 that takes them somewhere useful. A bare `Error('Cannot post.')` ends the conversation; this one
 continues it.
 
-## Collecting errors instead of stopping at the first
+## Collecting errors instead of stopping at the first (runtime 8.0 and later)
 
 For a batch that processes many records, `[ErrorBehavior(ErrorBehavior::Collect)]` with
 `HasCollectedErrors` and `GetCollectedErrors` reports everything wrong in one pass. **Only errors

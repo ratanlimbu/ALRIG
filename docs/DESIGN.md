@@ -89,8 +89,9 @@ a colleague mid-project.
 
 1. Its entire configuration footprint is one file: `.claude/alrig.json`. The only other
    things it ever writes are the change you asked for, the spec documents described in
-   guarantee 4 on the `product` tier, and `.mcp.json` — which only `/alrig:mcp` writes, only on
-   an explicit yes, and never by merging over an entry you already had.
+   guarantee 4 on the `product` tier, `.mcp.json` — which only `/alrig:mcp` writes, only on
+   an explicit yes, and never by merging over an entry you already had — and dated secret-scan
+   reports, only into `security.reportsDir`, only when that directory already exists.
 2. It never creates a directory layout in an existing app, and never moves or renames anything.
    `/alrig:new` is the single, bounded exception — see §5.2.
 3. Its own tooling never edits `CLAUDE.md`, `README`, `app.json`, or any other file it did not
@@ -124,6 +125,20 @@ All commands are namespaced `/alrig:`.
 | `/alrig:check [range]` | The stage 3 checks over a diff with no spec. No criteria, no scope, no gate. |
 | `/alrig:appsource [app]` | AppSource submission readiness. Reports only; never gates, never writes. |
 | `/alrig:mcp` | Offers optional MCP servers — Microsoft's AL MCP server first — and writes their configuration on an explicit yes. |
+
+Three more are skills invoked directly rather than through a command file, because each is a
+single procedure with no stage to sequence:
+
+| Skill | Behaviour |
+|---|---|
+| `/alrig:al-scan [app]` | Compile with every analyzer the project declares (third-party ones by path, never downloaded) under its ruleset; report every diagnostic by rule; check the ruleset against `security.rulesetBaseline`. Read-only. |
+| `/alrig:secret-scan` | gitleaks over the working tree and history (built-in fallback, said loudly); redacted; triage into rotate / move / confirm-fake; a dated report into `security.reportsDir` when it exists. |
+| `/alrig:release-check [app]` | Version bump and identity against the last release, ID ranges, XLIFF, how secrets are held (`SecretText`, `[NonDebuggable]`, `IsolatedStorage`), plus both scans. Verdict `READY`/`BLOCKED`/`UNVERIFIED`; writes nothing. |
+
+They are platform-level machinery. **The standard they enforce is the project's**: the ruleset
+and its baseline, the URL allowlist and the gitleaks configuration all come from the repository
+or the profile. An organisation that keeps a shared ruleset in its own repository points
+`security.rulesetBaseline` at it; the plugin ships no ruleset of its own.
 
 `go` only sequences the stages and triages whether Stage 0 runs. All behaviour lives in the stage skills, so the
 chained and standalone paths cannot drift apart.
@@ -177,10 +192,10 @@ Data, not prose. Hand-editable; `docs/PROFILE.md` documents every field.
 a fictional extension purely to show the shape.
 
 ```jsonc
-// Abridged — schema 2 adds per-app target, runtime, application, dependsOn and project,
-// build.provider and ci. docs/PROFILE.md has the full current shape.
+// Abridged — schema 2 added per-app target, runtime, application, dependsOn and project,
+// build.provider and ci; schema 3 added security. docs/PROFILE.md has the full current shape.
 {
-  "version": 2,
+  "version": 3,
   "tier": "customisation",                 // "product" | "customisation"
   "apps": [
     { "path": "app",
@@ -408,13 +423,22 @@ and why · any place the project's authority overrode the baseline.
 
 Blocking versus advisory comes from `policy`, not from the reviewer's judgement, and the
 reviewer may not re-tag a finding to change the outcome. Three verdicts rather than two:
-`UNVERIFIED` outranks `BLOCKED`, because you cannot block on what you did not see. The two
-were one word in the first draft, and the conflation cost real information — "this is wrong"
-and "I could not tell" call for different things from the human.
+"this is wrong" and "I could not tell" call for different things from the human. `BLOCKED`
+outranks `UNVERIFIED`: you can block on what you did see, and on a repository with no build
+the opposite order hid every `forbidden` hit and unmet criterion behind the one word users
+learn to skim. The checks that could not run are still listed under `BECAUSE`.
 
 ## 10. Subagent and token policy
 
-- **Nothing always-on.** No injected rules, no per-turn hooks. Idle cost is zero.
+- **Nothing always-on beyond the listings and one guard.** No injected rules, no per-turn
+  context. The idle cost is the command, skill and agent descriptions Claude Code lists in every
+  session — kept to one short line each.
+- **The write guard is the one hook**, and it is shaped to cost nothing it does not have to: a
+  `PreToolUse` on `Edit|Write|MultiEdit` whose shell wrapper exits before PowerShell starts for
+  any file that is not `.al`. It injects no tokens and prints nothing unless it blocks. It fails
+  open — no PowerShell, or an error in the check, lets the write through — because it is the
+  early warning; `secret-scan` and `release-check` are the enforcement. It was deferred in the
+  first draft for breaking "nothing when idle"; the fast path is what answered that.
 - Profile read once per run, by the stage that needs it.
 - Authority documents and §7 reference files read on demand, by theme; never duplicated into
   context wholesale.
@@ -440,6 +464,12 @@ alrig/
 │  ├─ THIRD-PARTY-NOTICES.md   ALDC's MIT notice, for the adapted design stage
 │  ├─ commands/   scan · new · design · spec · implement · review · go · check · appsource · mcp
 │  ├─ agents/     al-implementer.md · al-reviewer.md      (no model pinned)
+│  ├─ hooks/hooks.json   the write guard — PreToolUse on Edit|Write|MultiEdit of *.al
+│  ├─ scripts/    PowerShell (5.1 and 7) the guard and the scan skills call
+│  │  ├─ al-write-guard.sh · Test-AlWrite.ps1        the guard, shell fast path first
+│  │  ├─ AlrigSecurity.psm1                          shared secret and URL rules
+│  │  └─ Invoke-AlScan · Test-AlRuleset · Invoke-SecretScan · Invoke-ReleaseCheck
+│  ├─ config/gitleaks-al.toml   gitleaks defaults plus AL rules; a repository's own wins
 │  └─ skills/
 │     ├─ al-profile/     detection (references/detection.md) and profile authoring
 │     ├─ al-scaffold/    `/alrig:new` — a new app from asked-for facts
@@ -447,6 +477,7 @@ alrig/
 │     ├─ al-design/      Stage 0 — triage, decision areas, symbols, template
 │     ├─ al-spec/ · al-implement/ · al-review/
 │     ├─ al-appsource/   submission readiness; reports only
+│     ├─ al-scan/ · secret-scan/ · release-check/   analyzers + ruleset, credentials, release gate
 │     └─ al-conventions/ SKILL.md (index) + references/
 │        ├─ performance.md · warnings.md · correctness.md · extension-model.md
 │        ├─ testing.md · events.md · api.md · integration.md · upgrade.md
@@ -486,6 +517,14 @@ The agent line budget is 110, raised from 100 when the `policy` block landed. A 
 vocabulary and a closed exemption list are irreducible data, and shaving prose to fit a round
 number costs more than ten lines do. Raising a budget is a deliberate act and is recorded here
 rather than done quietly.
+
+**Executable, scripted (`tests/scripts.test.ps1`)** — runs the write-guard hook through `sh`
+with crafted payloads and every PowerShell script against a temporary copy of a fixture, and
+asserts exit codes, findings, false positives that once blocked ordinary AL, that no output or
+report ever contains a secret value, and that nothing is written into the repository. CI runs
+it on Linux under PowerShell 7 with gitleaks, so the shipped `gitleaks-al.toml` is parsed
+and used, and on Windows PowerShell 5.1 without, so the built-in fallback is what runs. Secret-
+shaped values are assembled at run time so the test file does not trip a scanner itself.
 
 **Behavioural, fixture-driven** — run `/alrig:scan` against each fixture and compare the
 produced profile with a golden file, using `tests/profile-diff.mjs`, which reports differing
@@ -582,8 +621,10 @@ than requiring the key's absence — the rule §10 wants is *never pinned*, not 
 ## 15. Deferred
 
 Estimation and pre-sales · documentation and release-note generation · translation tooling
-beyond the completeness check in `al-appsource` · an opt-in write-guard hook (rejected for now:
-a hook runs on every tool call, which breaks "nothing when idle") · running AppSourceCop's breaking-change analysis directly rather than reporting whether it can run.
+beyond the completeness check in `al-appsource` · running AppSourceCop's breaking-change analysis directly rather than reporting whether it can run · a git pre-commit hook and a CI pipeline template for the scans (the scripts take `-FailOnBlocking`/`-FailOnFindings` so a project can wire its own; shipping one would be imposing structure).
+
+Delivered in 0.4.0: the write guard (§10), `al-scan`, `secret-scan` and `release-check`, and
+profile schema 3's `security` block.
 
 Delivered since the first draft, and no longer deferred: test execution, `/alrig:check`, MCP as
 an opt-in rather than a bundled dependency, the `permissions`, `pages` and `telemetry` themes,

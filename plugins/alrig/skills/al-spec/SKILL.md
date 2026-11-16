@@ -1,7 +1,7 @@
 ---
 name: al-spec
-description: Stage 1 of the alrig pipeline — turn a Business Central request into a contract with independently checkable acceptance criteria, before any AL is written. Used by /alrig:spec and /alrig:go.
-version: 0.3.0
+description: alrig stage 1 — turn a Business Central request into a contract with checkable acceptance criteria, and triage it for /alrig:go. Loaded by /alrig:spec and /alrig:go.
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash, Write, AskUserQuestion
 ---
 
@@ -17,7 +17,19 @@ request touches** — chosen from the profile's `authority` list by what the req
 read wholesale. Reading all of a project's documentation to write one contract is the failure
 this stage exists to avoid.
 
-If the profile is absent, run `alrig:al-profile` first.
+If the profile is absent, run `alrig:al-profile` first. If it does not parse, quote the error
+and stop — never fall back to defaults.
+
+### Triage — when `/alrig:go` asks for it
+
+Read `${CLAUDE_PLUGIN_ROOT}/skills/al-design/references/triage.md` and apply it.
+
+- **LOW or MEDIUM** — do not stop. Put the one-line `TRIAGE` result at the top of the contract;
+  the human can override it at the spec gate.
+- **HIGH** — stop before writing the contract, state the line, and wait for the human to
+  confirm or override. `go` takes a confirmed HIGH to the design stage.
+- **With `--quick`** — apply it silently. Only a HIGH is shown: say `--quick` does not apply to
+  this change and why, and continue as a normal `go` run.
 
 ### An approved design binds this spec
 
@@ -47,13 +59,23 @@ expensive kind to discover at review.
 
 ## Out
 
-Write the contract in this shape. On the `customisation` tier it is inline in the
-conversation; on `product` it is a file in `specs.dir`. Nowhere else, ever.
+Write the contract in this shape, one line per entry, no prose outside it.
+
+| Situation | Where it goes |
+|---|---|
+| `product` tier, `specs.mode` = `file`, `specs.dir` exists | `<specs.dir>/<slug>.md` |
+| `customisation` tier, or `specs.mode` = `inline`, or `specs.dir` is `null` | inline in the conversation |
+| `specs.dir` set but the directory no longer exists | inline; say so; **never create it** |
+
+An inline contract lasts only as long as this conversation; say so when the run stops.
 
 ```
 PROBLEM        <what is wrong or missing, in the project's own terms>
 RULE SOURCE    <the regulation, ticket, specification section or conversation that
                 decides the behaviour — and where to read it>
+AUTHORITY      <paths from the profile's authority list that bind this change | none>.
+                Stages 2 and 3 read these and only these; where they contradict the
+                shipped baseline, they win
 OBJECTS        <each object to add or change: type, name, ID where the project
                 claims IDs, and which app it lives in — plus every non-AL file
                 the change must edit (app.json, the ID register), since stage 2
@@ -90,3 +112,6 @@ Stop. Present the contract and get explicit human approval. Do not proceed on si
 "looks good" about something else, or on your own judgement that it is obviously fine.
 
 If `OPEN` has entries, the human resolves them at this gate — that is what it is for.
+
+On a **no**: ask what to change, revise, and present again. On **stop**: end, and say how to
+resume — `/alrig:implement <spec path>` on a file spec; an inline one ends with the conversation.
