@@ -3,6 +3,10 @@
 `lint.mjs` is structural and scripted. These are behavioural: they need a Claude Code session
 with the plugin installed, because what is under test is what `/alrig:scan` actually does.
 
+The security scripts and the write guard are not tested here: `tests/scripts.test.ps1`
+executes them directly (`pwsh -File tests/scripts.test.ps1`, or `powershell.exe`), and CI
+runs it on both runtimes. What remains manual is how the skills read that output.
+
 Run them from a session opened **in the fixture directory**, not in this repository.
 
 ## Setup

@@ -12,6 +12,10 @@
 //   8  every reference file is reachable from its skill, and every one a skill names exists
 //   9  adapted third-party content ships with its licence notice
 //  10  every golden profile has one shape and the documented schema version
+//  11  every script the hook, a skill or another script names exists, and every script is named
+//  12  the write guard's secret rules and the shipped gitleaks rules agree
+//
+// tests/scripts.test.ps1 executes the scripts themselves; this file only checks structure.
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, dirname, resolve, relative, sep } from "node:path";
@@ -530,6 +534,37 @@ for (const file of agentFiles) {
       const reached = named.has(`scripts/${f}`) || scriptText.includes(f.replace(/\.ps1$/, ""));
       if (!reached) fail("scripts", `scripts/${f} is named by no hook, skill or other script`);
     }
+  }
+}
+
+// ------------------------------------------------- 12. secret rules agree
+//
+// The write guard and the built-in fallback use the rules in AlrigSecurity.psm1; gitleaks uses
+// config/gitleaks-al.toml. A rule added to one and not the other means the guard blocks what
+// the scan never reports, or the reverse. The rules below are the module's stand-ins for
+// gitleaks' own defaults (useDefault = true), so they deliberately have no entry in the TOML.
+// Adding to this list is a deliberate act.
+
+{
+  const COVERED_BY_GITLEAKS_DEFAULTS = new Set([
+    "private-key", "aws-access-key", "github-token", "slack-token", "stripe-key",
+    "google-api-key", "sendgrid-key", "entra-client-secret", "jwt", "azure-storage-key",
+    "sas-signature", "auth-header-literal",
+  ]);
+  const psm1Path = join(PLUGIN, "scripts", "AlrigSecurity.psm1");
+  const tomlPath = join(PLUGIN, "config", "gitleaks-al.toml");
+  if (existsSync(psm1Path) && existsSync(tomlPath)) {
+    const moduleIds = new Set([...readFileSync(psm1Path, "utf8").matchAll(/@\{\s*Id\s*=\s*'([a-z0-9-]+)'/g)].map((m) => m[1]));
+    const tomlIds = new Set([...readFileSync(tomlPath, "utf8").matchAll(/^id\s*=\s*"([a-z0-9-]+)"/gm)].map((m) => m[1]));
+    if (moduleIds.size === 0) fail("secret-rules", "found no rule Ids in AlrigSecurity.psm1 — has the rule table's shape changed?");
+    for (const id of moduleIds)
+      if (!tomlIds.has(id) && !COVERED_BY_GITLEAKS_DEFAULTS.has(id))
+        fail("secret-rules", `AlrigSecurity.psm1 has rule ${id}, which gitleaks-al.toml lacks — the guard blocks what the scan never reports`);
+    for (const id of tomlIds)
+      if (!moduleIds.has(id))
+        fail("secret-rules", `gitleaks-al.toml has rule ${id}, which AlrigSecurity.psm1 lacks — the scan reports what the guard lets through`);
+    for (const id of COVERED_BY_GITLEAKS_DEFAULTS)
+      if (!moduleIds.has(id)) fail("secret-rules", `${id} is listed as covered by gitleaks' defaults but is not a module rule — remove it from the list`);
   }
 }
 

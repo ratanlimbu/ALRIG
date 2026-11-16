@@ -1,7 +1,7 @@
 ---
 name: al-appsource
 description: Report how ready a Business Central app is for AppSource submission (manifest, affixes, breaking changes, permissions, translations). Read-only. Loaded by /alrig:appsource.
-version: 0.3.0
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: al-spec
 description: alrig stage 1 — turn a Business Central request into a contract with checkable acceptance criteria, and triage it for /alrig:go. Loaded by /alrig:spec and /alrig:go.
-version: 0.3.0
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash, Write, AskUserQuestion
 ---
 

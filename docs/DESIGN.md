@@ -518,6 +518,14 @@ vocabulary and a closed exemption list are irreducible data, and shaving prose t
 number costs more than ten lines do. Raising a budget is a deliberate act and is recorded here
 rather than done quietly.
 
+**Executable, scripted (`tests/scripts.test.ps1`)** — runs the write-guard hook through `sh`
+with crafted payloads and every PowerShell script against a temporary copy of a fixture, and
+asserts exit codes, findings, false positives that once blocked ordinary AL, that no output or
+report ever contains a secret value, and that nothing is written into the repository. CI runs
+it on Linux under PowerShell 7 with gitleaks, so the shipped `gitleaks-al.toml` is parsed
+and used, and on Windows PowerShell 5.1 without, so the built-in fallback is what runs. Secret-
+shaped values are assembled at run time so the test file does not trip a scanner itself.
+
 **Behavioural, fixture-driven** — run `/alrig:scan` against each fixture and compare the
 produced profile with a golden file, using `tests/profile-diff.mjs`, which reports differing
 paths rather than a verdict. `null` and absent are distinct there, because the profile's
@@ -615,7 +623,7 @@ than requiring the key's absence — the rule §10 wants is *never pinned*, not 
 Estimation and pre-sales · documentation and release-note generation · translation tooling
 beyond the completeness check in `al-appsource` · running AppSourceCop's breaking-change analysis directly rather than reporting whether it can run · a git pre-commit hook and a CI pipeline template for the scans (the scripts take `-FailOnBlocking`/`-FailOnFindings` so a project can wire its own; shipping one would be imposing structure).
 
-Delivered after 0.3.0: the write guard (§10), `al-scan`, `secret-scan` and `release-check`, and
+Delivered in 0.4.0: the write guard (§10), `al-scan`, `secret-scan` and `release-check`, and
 profile schema 3's `security` block.
 
 Delivered since the first draft, and no longer deferred: test execution, `/alrig:check`, MCP as

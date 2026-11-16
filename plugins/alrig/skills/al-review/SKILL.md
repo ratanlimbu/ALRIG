@@ -1,7 +1,7 @@
 ---
 name: al-review
 description: alrig stage 3 — independently re-verify an AL change against its spec, or a bare diff for /alrig:check. Loaded by /alrig:review, /alrig:go and /alrig:check.
-version: 0.3.0
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash, Agent, Task, mcp__al__al_compile, mcp__al__al_getdiagnostics, mcp__al__al_downloadsymbols
 ---
 

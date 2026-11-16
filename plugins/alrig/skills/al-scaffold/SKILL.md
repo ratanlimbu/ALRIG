@@ -1,7 +1,7 @@
 ---
 name: al-scaffold
 description: Start a Business Central app where none exists, asking every project fact and writing only on an explicit yes. Loaded by /alrig:new.
-version: 0.3.0
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash, Write, AskUserQuestion, Skill
 ---
 

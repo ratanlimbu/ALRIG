@@ -1,7 +1,7 @@
 ---
 name: al-implement
 description: alrig stage 2 — implement an approved AL spec, build it, and iterate to a clean warning delta. Loaded by /alrig:implement and /alrig:go.
-version: 0.3.0
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Agent, Task, AskUserQuestion, mcp__al__al_compile, mcp__al__al_build, mcp__al__al_getdiagnostics, mcp__al__al_getnextobjectid, mcp__al__al_downloadsymbols
 ---
 

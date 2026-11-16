@@ -3,7 +3,7 @@
 Versions follow the `version` field in `plugins/alrig/.claude-plugin/plugin.json`. Claude Code
 offers an update only when that field changes, so every release bumps it.
 
-## Unreleased
+## 0.4.0
 
 Code scanning, ruleset enforcement and credential handling.
 
@@ -25,6 +25,11 @@ Code scanning, ruleset enforcement and credential handling.
   rescan proposes them and asks.
 - `tests/lint.mjs` checks that every script the hook and skills name exists, and applies the
   no-customer-content rule to scripts and configuration too.
+- `tests/lint.mjs` also checks that the write guard's secret rules and the shipped
+  `gitleaks-al.toml` agree, so neither can gain a rule the other lacks.
+- **`tests/scripts.test.ps1`** executes the hook and every script against known inputs, and
+  CI runs it on Linux with PowerShell 7 and gitleaks, and on Windows PowerShell 5.1 without.
+- CI pins the Claude Code CLI it validates with.
 
 Fixes from the 0.3.0 review.
 

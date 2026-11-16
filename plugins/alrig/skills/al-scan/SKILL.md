@@ -1,7 +1,7 @@
 ---
 name: al-scan
-description: Compile AL apps with every code analyzer the project runs (CodeCop, AppSourceCop, UICop, PerTenantExtensionCop, LinterCop/ALCops) under its ruleset, check the ruleset was not weakened, and summarise. Read-only.
-version: 0.3.0
+description: Analyzer scan (not /alrig:scan, which sets up the profile) — compile AL apps with every code analyzer the project runs (CodeCop, AppSourceCop, UICop, PerTenantExtensionCop, LinterCop/ALCops) under its ruleset, check the ruleset was not weakened, and summarise. Read-only.
+version: 0.4.0
 argument-hint: "[app path, or omit for every app in the profile]"
 allowed-tools: Read, Glob, Grep, Bash, PowerShell
 ---

@@ -1,7 +1,7 @@
 ---
 name: al-design
 description: alrig stage 0 — for a HIGH-complexity Business Central change, settle the expensive-to-reverse decisions and verify base symbols before any spec. Loaded by /alrig:design and /alrig:go.
-version: 0.3.0
+version: 0.4.0
 allowed-tools: Read, Glob, Grep, Bash, Write, AskUserQuestion, mcp__al__al_symbolsearch, mcp__al__al_downloadsymbols
 ---
 

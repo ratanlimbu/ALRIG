@@ -1,7 +1,7 @@
 ---
 name: secret-scan
 description: Scan the repository and its git history for committed credentials with gitleaks (built-in fallback), write a dated redacted report, and say what to rotate and where each secret should live instead.
-version: 0.3.0
+version: 0.4.0
 argument-hint: "[--no-history]"
 allowed-tools: Read, Glob, Grep, Bash, PowerShell
 ---

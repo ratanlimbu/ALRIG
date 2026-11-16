@@ -1,7 +1,7 @@
 ---
 name: al-conventions
 description: Business Central AL best-practice checklists (performance, warnings, correctness, events, APIs, upgrade, permissions, pages and more), loaded one theme at a time when writing or reviewing AL.
-version: 0.3.0
+version: 0.4.0
 allowed-tools: Read
 ---
 

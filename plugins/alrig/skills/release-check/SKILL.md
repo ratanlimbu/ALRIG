@@ -1,7 +1,7 @@
 ---
 name: release-check
 description: Pre-release gate for a Business Central app — version bump, app.json identity, ID ranges, XLIFF, secret handling (SecretText, NonDebuggable, IsolatedStorage), analyzers and ruleset. Reports a verdict; writes nothing.
-version: 0.3.0
+version: 0.4.0
 argument-hint: "[app path, or omit for every non-test app] [--base <git ref>]"
 allowed-tools: Read, Glob, Grep, Bash, PowerShell
 ---
